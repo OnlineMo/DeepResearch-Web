@@ -58,8 +58,12 @@ export default function Home() {
       try {
         const response = await githubService.getTodayReports();
         setTodayReports(response.reports);
-      } catch (error) {
+      } catch (error: any) {
         console.warn('GitHub API 调用失败，使用模拟数据:', error);
+        // 如果是速率限制错误，显示更友好的错误信息
+        if (error.message && error.message.includes('API速率限制')) {
+          setError('API速率限制，请稍后再试');
+        }
         setTodayReports(mockReports);
       }
     } catch (err) {

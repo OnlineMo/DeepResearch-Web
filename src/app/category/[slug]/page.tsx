@@ -82,19 +82,31 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       );
       categoryReports = categoryReports.concat(batchResults);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.warn(`Failed to fetch reports for category ${categorySlug}:`, error);
-    // 使用模拟数据作为后备
-    categoryReports = [
-      {
-        title: "浙江一测所高度还原预渲染技术深度分析",
-        date: "2025-08-28",
-        path: `AI_Reports/${categorySlug}/zhe-jiang-yi-ce-suo-gao-du-huan-yuan-yu-xu-gong-yin-liang-tan-2025-08-28--v1.md`,
+    // 如果是速率限制错误，显示更友好的错误信息
+    if (error.message && error.message.includes('API速率限制')) {
+      categoryReports = [{
+        title: "API速率限制",
+        date: new Date().toISOString().split('T')[0],
+        path: "",
         version: "v1",
-        sourceUrl: "https://example.com/source-report",
+        sourceUrl: "",
         category: categorySlug
-      }
-    ];
+      }];
+    } else {
+      // 使用模拟数据作为后备
+      categoryReports = [
+        {
+          title: "浙江一测所高度还原预渲染技术深度分析",
+          date: "2025-08-28",
+          path: `AI_Reports/${categorySlug}/zhe-jiang-yi-ce-suo-gao-du-huan-yuan-yu-xu-gong-yin-liang-tan-2025-08-28--v1.md`,
+          version: "v1",
+          sourceUrl: "https://example.com/source-report",
+          category: categorySlug
+        }
+      ];
+    }
   }
 
   const getCategoryInfo = (categorySlug: string): ReportCategory => {

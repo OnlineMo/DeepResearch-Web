@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:github": "node test-github-api.js"
   },
   "dependencies": {
     "@octokit/rest": "^22.0.0",

@@ -87,6 +87,26 @@ src/
 GITHUB_TOKEN=your_github_token_here
 ```
 
+#### 获取 GitHub Token
+
+1. 访问 [GitHub Personal Access Tokens](https://github.com/settings/tokens)
+2. 点击 "Generate new token"
+3. 选择 "Fine-grained tokens" 或 "Classic token"
+4. 对于 Fine-grained tokens:
+   - 设置token名称
+   - 选择资源所有者(OnlineMo)
+   - 选择仓库(DeepResearch-Archive)
+   - 在权限部分选择 "Contents" 并设置为 "Read"
+5. 点击 "Generate token"
+6. 复制生成的token并添加到 `.env.local` 文件中
+
+#### API 速率限制
+
+- 未认证请求: 每小时60次
+- 认证请求: 每小时5000次
+
+建议在生产环境中配置GitHub token以避免速率限制问题。
+
 ### 部署配置
 
 项目已配置 GitHub Actions 自动部署。推送到 `main` 分支时会自动构建并部署到 GitHub Pages。

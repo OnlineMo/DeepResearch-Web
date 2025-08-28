@@ -48,7 +48,7 @@ export default async function TimelinePage({ params }: { params: { category?: st
     const navigationData = await githubService.getNavigationData();
     
     // 将导航数据转换为时间线格式
-    allReports = navigationData.categories.flatMap(categorySection => 
+    allReports = navigationData.categories.flatMap(categorySection =>
       categorySection.reports.map(report => ({
         title: report.title,
         date: report.date,
@@ -58,62 +58,74 @@ export default async function TimelinePage({ params }: { params: { category?: st
         category: categorySection.slug
       }))
     );
-  } catch (error) {
+  } catch (error: any) {
     console.warn('Failed to fetch navigation data:', error);
-    // 使用模拟数据作为后备
-    allReports = [
-      // 2025年1月28日
-      {
-        title: "2025年AI发展趋势深度分析报告",
-        date: "2025-01-28",
-        path: "AI_Reports/shi-zheng-yu-guo-ji/ai-trends-2025-01-28--v1.md",
+    // 如果是速率限制错误，显示更友好的错误信息
+    if (error.message && error.message.includes('API速率限制')) {
+      allReports = [{
+        title: "API速率限制",
+        date: new Date().toISOString().split('T')[0],
+        path: "",
         version: "v1",
-        sourceUrl: "https://example.com/ai-trends-2025",
+        sourceUrl: "",
         category: "shi-zheng-yu-guo-ji"
-      },
-      {
-        title: "ChatGPT-5发布对行业影响分析",
-        date: "2025-01-28",
-        path: "AI_Reports/xing-ye-yu-gong-si/chatgpt5-impact-2025-01-28--v1.md",
-        version: "v1",
-        sourceUrl: "https://example.com/chatgpt5-impact",
-        category: "xing-ye-yu-gong-si"
-      },
-      // 2025年1月27日
-      {
-        title: "AI监管政策最新动态解读",
-        date: "2025-01-27",
-        path: "AI_Reports/she-hui-yu-fa-zhi/ai-regulation-2025-01-27--v1.md",
-        version: "v1",
-        sourceUrl: "https://example.com/ai-regulation",
-        category: "she-hui-yu-fa-zhi"
-      },
-      {
-        title: "虚拟现实与AI融合技术分析",
-        date: "2025-01-27",
-        path: "AI_Reports/yu-le-yu-ming-xing/vr-ai-2025-01-27--v1.md",
-        version: "v1",
-        sourceUrl: "https://example.com/vr-ai",
-        category: "yu-le-yu-ming-xing"
-      },
-      // 2025年1月26日
-      {
-        title: "智能旅游助手发展现状分析",
-        date: "2025-01-26",
-        path: "AI_Reports/lv-you-yu-chu-xing/smart-travel-2025-01-26--v1.md",
-        version: "v1",
-        sourceUrl: "https://example.com/smart-travel",
-        category: "lv-you-yu-chu-xing"
-      },
-      {
-        title: "大模型在金融风控中的应用",
-        date: "2025-01-26",
-        path: "AI_Reports/xing-ye-yu-gong-si/ai-fintech-2025-01-26--v1.md",
-        version: "v1",
-        sourceUrl: "https://example.com/ai-fintech",
-        category: "xing-ye-yu-gong-si"
-      }
-    ];
+      }];
+    } else {
+      // 使用模拟数据作为后备
+      allReports = [
+        // 2025年1月28日
+        {
+          title: "2025年AI发展趋势深度分析报告",
+          date: "2025-01-28",
+          path: "AI_Reports/shi-zheng-yu-guo-ji/ai-trends-2025-01-28--v1.md",
+          version: "v1",
+          sourceUrl: "https://example.com/ai-trends-2025",
+          category: "shi-zheng-yu-guo-ji"
+        },
+        {
+          title: "ChatGPT-5发布对行业影响分析",
+          date: "2025-01-28",
+          path: "AI_Reports/xing-ye-yu-gong-si/chatgpt5-impact-2025-01-28--v1.md",
+          version: "v1",
+          sourceUrl: "https://example.com/chatgpt5-impact",
+          category: "xing-ye-yu-gong-si"
+        },
+        // 2025年1月27日
+        {
+          title: "AI监管政策最新动态解读",
+          date: "2025-01-27",
+          path: "AI_Reports/she-hui-yu-fa-zhi/ai-regulation-2025-01-27--v1.md",
+          version: "v1",
+          sourceUrl: "https://example.com/ai-regulation",
+          category: "she-hui-yu-fa-zhi"
+        },
+        {
+          title: "虚拟现实与AI融合技术分析",
+          date: "2025-01-27",
+          path: "AI_Reports/yu-le-yu-ming-xing/vr-ai-2025-01-27--v1.md",
+          version: "v1",
+          sourceUrl: "https://example.com/vr-ai",
+          category: "yu-le-yu-ming-xing"
+        },
+        // 2025年1月26日
+        {
+          title: "智能旅游助手发展现状分析",
+          date: "2025-01-26",
+          path: "AI_Reports/lv-you-yu-chu-xing/smart-travel-2025-01-26--v1.md",
+          version: "v1",
+          sourceUrl: "https://example.com/smart-travel",
+          category: "lv-you-yu-chu-xing"
+        },
+        {
+          title: "大模型在金融风控中的应用",
+          date: "2025-01-26",
+          path: "AI_Reports/xing-ye-yu-gong-si/ai-fintech-2025-01-26--v1.md",
+          version: "v1",
+          sourceUrl: "https://example.com/ai-fintech",
+          category: "xing-ye-yu-gong-si"
+        }
+      ];
+    }
   }
 
   // 筛选和搜索

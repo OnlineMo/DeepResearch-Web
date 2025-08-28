@@ -30,8 +30,16 @@ export default async function CategoriesPage() {
           count: reportCount,
           lastUpdated: new Date() // 实际应该从API获取最新更新时间
         };
-      } catch (error) {
+      } catch (error: any) {
         console.warn(`Failed to fetch reports for category ${category.slug}:`, error);
+        // 如果是速率限制错误，显示更友好的错误信息
+        if (error.message && error.message.includes('API速率限制')) {
+          return {
+            ...category,
+            count: -1, // 特殊值表示API速率限制
+            lastUpdated: new Date()
+          };
+        }
         return {
           ...category,
           count: 0,

@@ -61,19 +61,33 @@ export default async function ReportPage({ params }: ReportPageProps) {
       path: fullPath,
       lastModified: new Date().toISOString()
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to fetch report:', error);
-    // 使用模拟数据作为后备
-    reportData = {
-      title: "报告未找到",
-      content: "# 报告未找到\n\n抱歉，您请求的报告不存在或暂时无法访问。",
-      date: "2025-08-28",
-      version: "v1",
-      category: "shi-zheng-yu-guo-ji",
-      sourceUrl: "",
-      path: fullPath,
-      lastModified: "2025-08-28T10:30:00Z"
-    };
+    // 如果是速率限制错误，显示更友好的错误信息
+    if (error.message && error.message.includes('API速率限制')) {
+      reportData = {
+        title: "API速率限制",
+        content: "# API速率限制\n\n当前请求频率过高，请稍后再试。",
+        date: new Date().toISOString().split('T')[0],
+        version: "v1",
+        category: "shi-zheng-yu-guo-ji",
+        sourceUrl: "",
+        path: fullPath,
+        lastModified: new Date().toISOString()
+      };
+    } else {
+      // 使用模拟数据作为后备
+      reportData = {
+        title: "报告未找到",
+        content: "# 报告未找到\n\n抱歉，您请求的报告不存在或暂时无法访问。",
+        date: "2025-08-28",
+        version: "v1",
+        category: "shi-zheng-yu-guo-ji",
+        sourceUrl: "",
+        path: fullPath,
+        lastModified: "2025-08-28T10:30:00Z"
+      };
+    }
   }
 
   const getCategoryInfo = (categorySlug: string): ReportCategory => {
