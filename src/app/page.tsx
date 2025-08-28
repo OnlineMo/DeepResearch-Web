@@ -6,6 +6,7 @@ import { Calendar, TrendingUp, BookOpen, Clock, ArrowRight, Sparkles } from 'luc
 import { Header } from '@/components/header';
 import { Sidebar } from '@/components/sidebar';
 import { Footer } from '@/components/footer';
+import { githubService } from '@/lib/github';
 import { REPORT_CATEGORIES, CATEGORY_COLORS } from '@/constants';
 import { TodayReport, ReportCategory } from '@/types';
 
@@ -53,11 +54,14 @@ export default function Home() {
         }
       ];
       
-      setTodayReports(mockReports);
-      
-      // 实际的 API 调用（在网络可用时启用）
-      // const response = await githubService.getTodayReports();
-      // setTodayReports(response.reports);
+      // 尝试真实的 API 调用，如果失败则使用模拟数据
+      try {
+        const response = await githubService.getTodayReports();
+        setTodayReports(response.reports);
+      } catch (error) {
+        console.warn('GitHub API 调用失败，使用模拟数据:', error);
+        setTodayReports(mockReports);
+      }
     } catch (err) {
       console.error('Error loading today reports:', err);
       setError('加载今日报告失败，请稍后重试');
