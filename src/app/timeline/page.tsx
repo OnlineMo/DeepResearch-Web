@@ -1,12 +1,11 @@
-import { 
-  Clock, 
-  Calendar, 
-  ArrowRight, 
+import {
+  Clock,
+  Calendar,
+  ArrowRight,
   BookOpen,
   Filter,
   TrendingUp,
-  History,
-  Search
+  History
 } from 'lucide-react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
@@ -15,23 +14,31 @@ import { REPORT_CATEGORIES, CATEGORY_COLORS } from '@/constants';
 import { TodayReport, ReportCategory } from '@/types';
 import Link from 'next/link';
 
-interface TimelinePageProps {
-  searchParams: {
-    category?: string;
-    year?: string;
-    search?: string;
-  };
-}
-
-export const dynamic = 'force-dynamic';
+// 移除 dynamic = 'force-dynamic' 以支持静态导出
+// export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
 
-export default async function TimelinePage({ searchParams }: TimelinePageProps) {
-  const params = {
-    category: searchParams.category || 'all',
-    year: searchParams.year || '2025',
-    search: searchParams.search || ''
-  };
+// 为静态导出生成参数
+export async function generateStaticParams() {
+  const categories = ['all', 'shi-zheng-yu-guo-ji', 'she-hui-yu-fa-zhi', 'yu-le-yu-ming-xing', 'xing-ye-yu-gong-si', 'lv-you-yu-chu-xing'];
+  const years = ['2025', '2024']; // 可以根据实际数据调整年份
+  
+  // 生成所有可能的参数组合
+  const params = [];
+  for (const category of categories) {
+    for (const year of years) {
+      params.push({ category, year });
+    }
+  }
+  
+  return params;
+}
+
+// 修改页面组件，移除对searchParams的依赖
+export default async function TimelinePage({ params }: { params: { category?: string; year?: string } }) {
+  // 使用静态参数而不是searchParams
+  const category = params?.category || 'all';
+  const year = params?.year || '2025';
 
   // 获取真实的导航数据
   let allReports: TodayReport[] = [];
@@ -111,12 +118,10 @@ export default async function TimelinePage({ searchParams }: TimelinePageProps) 
 
   // 筛选和搜索
   const filteredReports = allReports.filter(report => {
-    const matchesCategory = params.category === 'all' || report.category === params.category;
-    const matchesYear = new Date(report.date).getFullYear().toString() === params.year;
-    const matchesSearch = params.search === '' || 
-      report.title.toLowerCase().includes(params.search.toLowerCase());
+    const matchesCategory = category === 'all' || report.category === category;
+    const matchesYear = new Date(report.date).getFullYear().toString() === year;
     
-    return matchesCategory && matchesYear && matchesSearch;
+    return matchesCategory && matchesYear;
   });
 
   // 按日期分组
@@ -192,33 +197,22 @@ export default async function TimelinePage({ searchParams }: TimelinePageProps) 
 
           {/* Filters */}
           <div className="space-y-4">
-            {/* Search */}
-            <div className="relative max-w-md mx-auto">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="搜索报告标题..."
-                defaultValue={params.search}
-                className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
-            </div>
-
             {/* Year Filter */}
             <div className="flex justify-center">
               <div className="flex items-center space-x-3">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground">年份:</span>
-                {availableYears.map((year) => (
+                {availableYears.map((yr) => (
                   <Link
-                    key={year}
-                    href={`/timeline?category=${params.category}&year=${year}&search=${params.search}`}
+                    key={yr}
+                    href={`/timeline/${category}/${yr}`}
                     className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                      year === year
+                      yr === year
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     }`}
                   >
-                    {year}
+                    {yr}
                   </Link>
                 ))}
               </div>
@@ -231,9 +225,9 @@ export default async function TimelinePage({ searchParams }: TimelinePageProps) 
                 <span className="text-sm font-medium text-foreground">分类:</span>
               </div>
               <Link
-                href={`/timeline?category=all&year=${params.year}&search=${params.search}`}
+                href={`/timeline/all/${year}`}
                 className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  params.category === 'all'
+                  category === 'all'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }`}
@@ -246,13 +240,13 @@ export default async function TimelinePage({ searchParams }: TimelinePageProps) 
                 return (
                   <Link
                     key={cat.slug}
-                    href={`/timeline?category=${cat.slug}&year=${params.year}&search=${params.search}`}
+                    href={`/timeline/${cat.slug}/${year}`}
                     className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                      params.category === cat.slug
+                      category === cat.slug
                         ? 'text-white'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     }`}
-                    style={params.category === cat.slug ? { backgroundColor: colors.primary } : {}}
+                    style={category === cat.slug ? { backgroundColor: colors.primary } : {}}
                   >
                     {cat.display}
                   </Link>

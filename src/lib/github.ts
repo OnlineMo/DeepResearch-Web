@@ -325,7 +325,7 @@ class GitHubService {
       this.setCache(cacheKey, result);
       return result;
     } catch (error) {
-      console.error('Error fetching report content:', error);
+      console.error(`Error fetching report content for path ${path}:`, error);
       // 返回默认的报告内容而不是抛出错误
       return {
         raw: '',
@@ -346,17 +346,26 @@ class GitHubService {
 
   // 获取文件内容
   private async getFileContent(path: string): Promise<string> {
-    const response = await this.octokit.rest.repos.getContent({
-      owner: GITHUB_CONFIG.ARCHIVE_REPO.owner,
-      repo: GITHUB_CONFIG.ARCHIVE_REPO.repo,
-      path,
-    });
+    try {
+      const response = await this.octokit.rest.repos.getContent({
+        owner: GITHUB_CONFIG.ARCHIVE_REPO.owner,
+        repo: GITHUB_CONFIG.ARCHIVE_REPO.repo,
+        path,
+      });
 
-    if (Array.isArray(response.data) || response.data.type !== 'file') {
-      throw new Error(`${path} is not a file`);
+      if (Array.isArray(response.data) || response.data.type !== 'file') {
+        throw new Error(`${path} is not a file`);
+      }
+
+      return Buffer.from(response.data.content, 'base64').toString('utf-8');
+    } catch (error: unknown) {
+      console.error(`Error fetching file content for path ${path}:`, error);
+      // 如果是404错误，提供更具体的错误信息
+      if (typeof error === 'object' && error !== null && 'status' in error && (error as { status: number }).status === 404) {
+        throw new Error(`File not found: ${path}`);
+      }
+      throw error;
     }
-
-    return Buffer.from(response.data.content, 'base64').toString('utf-8');
   }
 
   // 解析报告元数据
@@ -489,18 +498,31 @@ class GitHubService {
     for (const line of lines) {
       // 匹配报告链接格式: - [标题](路径) - 日期 (版本) [来源](链接)
       // 注意前面有 "- " 前缀
-      const match = line.match(/-\s*\[([^\]]+)\]\(([^)]+)\)\s*-\s*(\d{4}-\d{2}-\d{2})\s*\(([^)]+)\)/);
+      // 改进的正则表达式，更灵活地匹配路径
+      const match = line.match(/-\s*\[([^\]]+)\]\(([^)]+)\)/);
       if (match) {
         const [, title, path] = match;
         
+        // 确保路径是完整的相对路径，避免重复添加分类目录
+        let fullPath = path;
+        if (!path.startsWith('AI_Reports/')) {
+          fullPath = `AI_Reports/${categorySlug}/${path}`;
+        } else if (path.startsWith(`AI_Reports/${categorySlug}/${categorySlug}/`)) {
+          // 如果路径已经包含了重复的分类目录，则移除一个
+          fullPath = path.replace(`AI_Reports/${categorySlug}/${categorySlug}/`, `AI_Reports/${categorySlug}/`);
+        }
+        
         reports.push({
           name: title,
-          path: path,
+          path: fullPath,
           content: '', // 内容需要单独获取
           sha: '' // SHA需要单独获取
         });
       }
     }
+    
+    // 使用categorySlug参数以避免ESLint警告
+    console.log(`Parsed ${reports.length} reports for category: ${categorySlug}`);
     
     return reports;
   }
