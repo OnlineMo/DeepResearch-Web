@@ -58,10 +58,10 @@ export default async function TimelinePage({ params }: { params: { category?: st
         category: categorySection.slug
       }))
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.warn('Failed to fetch navigation data:', error);
     // 如果是速率限制错误，显示更友好的错误信息
-    if (error.message && error.message.includes('API速率限制')) {
+    if (error instanceof Error && error.message.includes('API速率限制')) {
       allReports = [{
         title: "API速率限制",
         date: new Date().toISOString().split('T')[0],

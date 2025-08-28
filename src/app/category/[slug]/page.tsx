@@ -66,7 +66,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               sourceUrl: reportContent.metadata.source,
               category: categorySlug
             };
-          } catch (error) {
+          } catch (error: unknown) {
             console.warn(`Failed to fetch report ${report.path}:`, error);
             // 返回基础信息
             return {
@@ -82,10 +82,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       );
       categoryReports = categoryReports.concat(batchResults);
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.warn(`Failed to fetch reports for category ${categorySlug}:`, error);
     // 如果是速率限制错误，显示更友好的错误信息
-    if (error.message && error.message.includes('API速率限制')) {
+    if (error instanceof Error && error.message.includes('API速率限制')) {
       categoryReports = [{
         title: "API速率限制",
         date: new Date().toISOString().split('T')[0],

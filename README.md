@@ -97,8 +97,12 @@ GITHUB_TOKEN=your_github_token_here
    - 选择资源所有者(OnlineMo)
    - 选择仓库(DeepResearch-Archive)
    - 在权限部分选择 "Contents" 并设置为 "Read"
-5. 点击 "Generate token"
-6. 复制生成的token并添加到 `.env.local` 文件中
+5. 对于 Classic tokens:
+   - 设置token名称
+   - 选择合适的过期时间
+   - 在 "Select scopes" 部分勾选 "public_repo" 或 "repo" 权限
+6. 点击 "Generate token"
+7. 复制生成的token并添加到 `.env.local` 文件中
 
 #### API 速率限制
 
@@ -106,6 +110,10 @@ GITHUB_TOKEN=your_github_token_here
 - 认证请求: 每小时5000次
 
 建议在生产环境中配置GitHub token以避免速率限制问题。
+
+#### 构建时的API访问
+
+在构建过程中，Next.js会尝试预渲染页面并获取GitHub内容。如果未配置token，可能会看到401错误，但这不会阻止构建完成。构建仍然会成功，页面会使用模拟数据进行预渲染。
 
 ### 部署配置
 

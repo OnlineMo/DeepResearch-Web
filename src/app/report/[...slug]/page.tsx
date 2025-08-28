@@ -61,10 +61,10 @@ export default async function ReportPage({ params }: ReportPageProps) {
       path: fullPath,
       lastModified: new Date().toISOString()
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to fetch report:', error);
     // 如果是速率限制错误，显示更友好的错误信息
-    if (error.message && error.message.includes('API速率限制')) {
+    if (error instanceof Error && error.message.includes('API速率限制')) {
       reportData = {
         title: "API速率限制",
         content: "# API速率限制\n\n当前请求频率过高，请稍后再试。",

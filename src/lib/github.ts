@@ -63,15 +63,18 @@ class GitHubService {
 
       this.setCache(cacheKey, result);
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching repository root:', error);
       // 提供更详细的错误信息
-      if (error.status === 403) {
-        throw new Error('API速率限制 exceeded. 请配置GITHUB_TOKEN以提高限制。');
-      } else if (error.status === 404) {
-        throw new Error('仓库未找到。请检查仓库配置。');
+      if (typeof error === 'object' && error !== null && 'status' in error) {
+        const err = error as { status: number; message?: string };
+        if (err.status === 403) {
+          throw new Error('API速率限制 exceeded. 请配置GITHUB_TOKEN以提高限制。');
+        } else if (err.status === 404) {
+          throw new Error('仓库未找到。请检查仓库配置。');
+        }
       }
-      throw new Error(`获取仓库内容失败: ${error.message || error}`);
+      throw new Error(`获取仓库内容失败: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
