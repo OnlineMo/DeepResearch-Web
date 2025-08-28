@@ -503,13 +503,15 @@ class GitHubService {
       if (match) {
         const [, title, path] = match;
         
-        // 确保路径是完整的相对路径，避免重复添加分类目录
+        // 确保路径是正确的完整路径
         let fullPath = path;
-        if (!path.startsWith('AI_Reports/')) {
+        // 如果路径已经以 AI_Reports/ 开头，则认为它是完整路径，直接使用
+        if (path.startsWith('AI_Reports/')) {
+          fullPath = path;
+        }
+        // 否则，认为它是相对路径，添加前缀
+        else {
           fullPath = `AI_Reports/${categorySlug}/${path}`;
-        } else if (path.startsWith(`AI_Reports/${categorySlug}/${categorySlug}/`)) {
-          // 如果路径已经包含了重复的分类目录，则移除一个
-          fullPath = path.replace(`AI_Reports/${categorySlug}/${categorySlug}/`, `AI_Reports/${categorySlug}/`);
         }
         
         reports.push({

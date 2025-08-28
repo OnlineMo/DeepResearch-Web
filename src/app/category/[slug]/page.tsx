@@ -47,35 +47,41 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     // 解析报告列表
     const parsedReports = githubService.parseCategoryReports(reportsContent, categorySlug);
     
-    // 获取每个报告的详细信息
-    categoryReports = await Promise.all(
-      parsedReports.map(async (report) => {
-        try {
-          // 获取报告内容
-          const reportContent = await githubService.getReportContent(report.path);
-          
-          return {
-            title: reportContent.title,
-            date: reportContent.metadata.date,
-            path: report.path,
-            version: reportContent.metadata.version,
-            sourceUrl: reportContent.metadata.source,
-            category: categorySlug
-          };
-        } catch (error) {
-          console.warn(`Failed to fetch report ${report.path}:`, error);
-          // 返回基础信息
-          return {
-            title: report.name,
-            date: '',
-            path: report.path,
-            version: 'v1',
-            sourceUrl: '',
-            category: categorySlug
-          };
-        }
-      })
-    );
+    // 获取每个报告的详细信息 (限制并发数为3)
+    const concurrencyLimit = 3;
+    categoryReports = [];
+    for (let i = 0; i < parsedReports.length; i += concurrencyLimit) {
+      const batch = parsedReports.slice(i, i + concurrencyLimit);
+      const batchResults = await Promise.all(
+        batch.map(async (report) => {
+          try {
+            // 获取报告内容
+            const reportContent = await githubService.getReportContent(report.path);
+            
+            return {
+              title: reportContent.title,
+              date: reportContent.metadata.date,
+              path: report.path,
+              version: reportContent.metadata.version,
+              sourceUrl: reportContent.metadata.source,
+              category: categorySlug
+            };
+          } catch (error) {
+            console.warn(`Failed to fetch report ${report.path}:`, error);
+            // 返回基础信息
+            return {
+              title: report.name,
+              date: '',
+              path: report.path,
+              version: 'v1',
+              sourceUrl: '',
+              category: categorySlug
+            };
+          }
+        })
+      );
+      categoryReports = categoryReports.concat(batchResults);
+    }
   } catch (error) {
     console.warn(`Failed to fetch reports for category ${categorySlug}:`, error);
     // 使用模拟数据作为后备
