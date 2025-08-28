@@ -326,7 +326,21 @@ class GitHubService {
       return result;
     } catch (error) {
       console.error('Error fetching report content:', error);
-      throw new Error(`获取报告 ${path} 失败`);
+      // 返回默认的报告内容而不是抛出错误
+      return {
+        raw: '',
+        metadata: {
+          date: '',
+          edition: '',
+          version: '',
+          category_slug: this.extractCategoryFromPath(path),
+          category_display: this.getCategoryDisplay(this.extractCategoryFromPath(path)),
+          source: '',
+          readTime: 0
+        },
+        content: '# 报告未找到\n\n抱歉，您请求的报告不存在或暂时无法访问。',
+        title: '报告未找到'
+      };
     }
   }
 
@@ -361,7 +375,7 @@ class GitHubService {
       category_slug: categorySlug,
       category_display: this.getCategoryDisplay(categorySlug),
       source: (frontmatter.source as string) || '',
-      readTime: frontmatter.readTime as number || this.estimateReadTime(frontmatter.content as string || '')
+      readTime: frontmatter.readTime as number || this.estimateReadTime((frontmatter.content as string) || '')
     };
   }
 
@@ -433,6 +447,56 @@ class GitHubService {
       console.error('Error checking for updates:', error);
       throw new Error('检查更新失败');
     }
+  }
+
+  // 获取Reports.md文件内容
+  async getCategoryReportsIndex(categorySlug: string): Promise<string> {
+    try {
+      const response = await this.octokit.rest.repos.getContent({
+        owner: GITHUB_CONFIG.ARCHIVE_REPO.owner,
+        repo: GITHUB_CONFIG.ARCHIVE_REPO.repo,
+        path: `AI_Reports/${categorySlug}/Reports.md`,
+      });
+
+      if (Array.isArray(response.data) || response.data.type !== 'file') {
+        throw new Error('Reports.md is not a file');
+      }
+
+      return Buffer.from(response.data.content, 'base64').toString('utf-8');
+    } catch (error) {
+      console.error(`Error fetching Reports.md for category ${categorySlug}:`, error);
+      // 返回默认的Reports.md内容
+      return `# ${this.getCategoryDisplay(categorySlug)} Reports
+
+## 报告总数：0
+
+暂无报告。
+`;
+    }
+  }
+
+  // 解析Reports.md文件内容，提取报告列表
+  parseCategoryReports(content: string, categorySlug: string): ReportFile[] {
+    const reports: ReportFile[] = [];
+    const lines = content.split('\n');
+    
+    for (const line of lines) {
+      // 匹配报告链接格式: - [标题](路径) - 日期 (版本) [来源](链接)
+      // 注意前面有 "- " 前缀
+      const match = line.match(/-\s*\[([^\]]+)\]\(([^)]+)\)\s*-\s*(\d{4}-\d{2}-\d{2})\s*\(([^)]+)\)/);
+      if (match) {
+        const [, title, path] = match;
+        
+        reports.push({
+          name: title,
+          path: path,
+          content: '', // 内容需要单独获取
+          sha: '' // SHA需要单独获取
+        });
+      }
+    }
+    
+    return reports;
   }
 
   // 获取最后的commit SHA

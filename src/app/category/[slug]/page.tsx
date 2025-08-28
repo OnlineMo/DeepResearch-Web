@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { githubService } from '@/lib/github';
 import { REPORT_CATEGORIES, CATEGORY_COLORS } from '@/constants';
 import { ReportCategory } from '@/types';
 
@@ -26,36 +27,69 @@ interface CategoryPageProps {
   };
 }
 
-export default function CategoryPage({ params }: CategoryPageProps) {
+export default async function CategoryPage({ params }: CategoryPageProps) {
   const categorySlug = params.slug;
 
-  // 模拟分类报告数据
-  const categoryReports = [
-    {
-      title: "浙江一测所高度还原预渲染技术深度分析",
-      date: "2025-08-28",
-      path: `AI_Reports/${categorySlug}/zhe-jiang-yi-ce-suo-gao-du-huan-yuan-yu-xu-gong-yin-liang-tan-2025-08-28--v1.md`,
-      version: "v1",
-      sourceUrl: "https://example.com/source-report",
-      category: categorySlug
-    },
-    {
-      title: "智能旅游助手发展现状分析",
-      date: "2025-01-26",
-      path: `AI_Reports/${categorySlug}/smart-travel-2025-01-26--v1.md`,
-      version: "v1",
-      sourceUrl: "https://example.com/smart-travel",
-      category: categorySlug
-    },
-    {
-      title: "出行数据隐私保护技术研究",
-      date: "2025-01-25",
-      path: `AI_Reports/${categorySlug}/travel-privacy-2025-01-25--v1.md`,
-      version: "v1",
-      sourceUrl: "https://example.com/travel-privacy",
-      category: categorySlug
-    }
-  ];
+  // 获取真实的分类报告数据
+  let categoryReports: {
+    title: string;
+    date: string;
+    path: string;
+    version: string;
+    sourceUrl: string;
+    category: string;
+  }[] = [];
+  
+  try {
+    // 获取分类下的Reports.md文件内容
+    const reportsContent = await githubService.getCategoryReportsIndex(categorySlug);
+    
+    // 解析报告列表
+    const parsedReports = githubService.parseCategoryReports(reportsContent, categorySlug);
+    
+    // 获取每个报告的详细信息
+    categoryReports = await Promise.all(
+      parsedReports.map(async (report) => {
+        try {
+          // 获取报告内容
+          const reportContent = await githubService.getReportContent(report.path);
+          
+          return {
+            title: reportContent.title,
+            date: reportContent.metadata.date,
+            path: report.path,
+            version: reportContent.metadata.version,
+            sourceUrl: reportContent.metadata.source,
+            category: categorySlug
+          };
+        } catch (error) {
+          console.warn(`Failed to fetch report ${report.path}:`, error);
+          // 返回基础信息
+          return {
+            title: report.name,
+            date: '',
+            path: report.path,
+            version: 'v1',
+            sourceUrl: '',
+            category: categorySlug
+          };
+        }
+      })
+    );
+  } catch (error) {
+    console.warn(`Failed to fetch reports for category ${categorySlug}:`, error);
+    // 使用模拟数据作为后备
+    categoryReports = [
+      {
+        title: "浙江一测所高度还原预渲染技术深度分析",
+        date: "2025-08-28",
+        path: `AI_Reports/${categorySlug}/zhe-jiang-yi-ce-suo-gao-du-huan-yuan-yu-xu-gong-yin-liang-tan-2025-08-28--v1.md`,
+        version: "v1",
+        sourceUrl: "https://example.com/source-report",
+        category: categorySlug
+      }
+    ];
+  }
 
   const getCategoryInfo = (categorySlug: string): ReportCategory => {
     return REPORT_CATEGORIES.find(cat => cat.slug === categorySlug) || REPORT_CATEGORIES[0];

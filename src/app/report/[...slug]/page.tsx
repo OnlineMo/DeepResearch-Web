@@ -11,6 +11,7 @@ import {
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { MarkdownRenderer } from '@/components/markdown-renderer';
+import { githubService } from '@/lib/github';
 import { REPORT_CATEGORIES, CATEGORY_COLORS } from '@/constants';
 import { ReportCategory } from '@/types';
 
@@ -30,45 +31,50 @@ interface ReportPageProps {
   };
 }
 
-export default function ReportPage({ params }: ReportPageProps) {
+export default async function ReportPage({ params }: ReportPageProps) {
   // 重建完整路径
   const fullPath = decodeURIComponent(params.slug.join('/'));
 
-  // 模拟报告数据
-  const reportData = {
-    title: "浙江一测所高度还原预渲染技术深度分析",
-    content: `# 浙江一测所高度还原预渲染技术深度分析
-
-## 项目概述
-
-本报告深入分析了浙江一测所在高度还原预渲染技术方面的最新进展，涵盖了技术实现、应用场景和发展前景。
-
-## 技术特点
-
-### 1. 高精度渲染
-- **亚像素级精度**：实现了亚像素级别的渲染精度
-- **多层次细节**：支持多层次细节展示
-- **实时预览**：提供实时预览功能
-
-### 2. 性能优化
-- **GPU加速**：充分利用GPU并行计算能力
-- **内存优化**：采用智能内存管理策略
-- **缓存机制**：实现高效的缓存机制
-
-## 结论
-
-浙江一测所的高度还原预渲染技术在旅游出行领域展现出巨大潜力。
-
----
-
-*本报告由DeepResearch团队整理，数据截至2025年8月28日*`,
-    date: "2025-08-28",
-    version: "v1",
-    category: "lv-you-yu-chu-xing",
-    sourceUrl: "https://example.com/source-report",
-    path: fullPath,
-    lastModified: "2025-08-28T10:30:00Z"
-  };
+  // 获取真实的报告数据
+  let reportData: {
+    title: string;
+    content: string;
+    date: string;
+    version: string;
+    category: string;
+    sourceUrl: string;
+    path: string;
+    lastModified: string;
+  } | null = null;
+  
+  try {
+    // 获取报告内容
+    const reportContent = await githubService.getReportContent(fullPath);
+    
+    reportData = {
+      title: reportContent.title,
+      content: reportContent.content,
+      date: reportContent.metadata.date,
+      version: reportContent.metadata.version,
+      category: reportContent.metadata.category_slug,
+      sourceUrl: reportContent.metadata.source,
+      path: fullPath,
+      lastModified: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Failed to fetch report:', error);
+    // 使用模拟数据作为后备
+    reportData = {
+      title: "报告未找到",
+      content: "# 报告未找到\n\n抱歉，您请求的报告不存在或暂时无法访问。",
+      date: "2025-08-28",
+      version: "v1",
+      category: "shi-zheng-yu-guo-ji",
+      sourceUrl: "",
+      path: fullPath,
+      lastModified: "2025-08-28T10:30:00Z"
+    };
+  }
 
   const getCategoryInfo = (categorySlug: string): ReportCategory => {
     return REPORT_CATEGORIES.find(cat => cat.slug === categorySlug) || REPORT_CATEGORIES[0];

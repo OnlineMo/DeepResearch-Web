@@ -1,6 +1,4 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { 
   Clock, 
@@ -10,105 +8,128 @@ import {
   Filter,
   TrendingUp,
   History,
-  RefreshCw,
-  AlertCircle,
-  // ChevronDown,
   Search
 } from 'lucide-react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
-// import { githubService } from '@/lib/github';
+import { githubService } from '@/lib/github';
 import { REPORT_CATEGORIES, CATEGORY_COLORS } from '@/constants';
 import { TodayReport, ReportCategory } from '@/types';
 
-export default function TimelinePage() {
-  const [timelineReports, setTimelineReports] = useState<TodayReport[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedYear, setSelectedYear] = useState<string>('2025');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-
-  useEffect(() => {
-    loadTimelineReports();
-  }, []);
-
-  const loadTimelineReports = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // 模拟时间线报告数据
-      const mockReports: TodayReport[] = [
-        // 2025年1月28日
-        {
-          title: "2025年AI发展趋势深度分析报告",
-          date: "2025-01-28",
-          path: "AI_Reports/shi-zheng-yu-guo-ji/ai-trends-2025-01-28--v1.md",
-          version: "v1",
-          sourceUrl: "https://example.com/ai-trends-2025",
-          category: "shi-zheng-yu-guo-ji"
-        },
-        {
-          title: "ChatGPT-5发布对行业影响分析",
-          date: "2025-01-28",
-          path: "AI_Reports/xing-ye-yu-gong-si/chatgpt5-impact-2025-01-28--v1.md",
-          version: "v1",
-          sourceUrl: "https://example.com/chatgpt5-impact",
-          category: "xing-ye-yu-gong-si"
-        },
-        // 2025年1月27日
-        {
-          title: "AI监管政策最新动态解读",
-          date: "2025-01-27",
-          path: "AI_Reports/she-hui-yu-fa-zhi/ai-regulation-2025-01-27--v1.md",
-          version: "v1",
-          sourceUrl: "https://example.com/ai-regulation",
-          category: "she-hui-yu-fa-zhi"
-        },
-        {
-          title: "虚拟现实与AI融合技术分析",
-          date: "2025-01-27",
-          path: "AI_Reports/yu-le-yu-ming-xing/vr-ai-2025-01-27--v1.md",
-          version: "v1",
-          sourceUrl: "https://example.com/vr-ai",
-          category: "yu-le-yu-ming-xing"
-        },
-        // 2025年1月26日
-        {
-          title: "智能旅游助手发展现状分析",
-          date: "2025-01-26",
-          path: "AI_Reports/lv-you-yu-chu-xing/smart-travel-2025-01-26--v1.md",
-          version: "v1",
-          sourceUrl: "https://example.com/smart-travel",
-          category: "lv-you-yu-chu-xing"
-        },
-        {
-          title: "大模型在金融风控中的应用",
-          date: "2025-01-26",
-          path: "AI_Reports/xing-ye-yu-gong-si/ai-fintech-2025-01-26--v1.md",
-          version: "v1",
-          sourceUrl: "https://example.com/ai-fintech",
-          category: "xing-ye-yu-gong-si"
-        }
-      ];
-      
-      // 尝试真实的 API 调用，如果失败则使用模拟数据
-      try {
-        // const response = await githubService.getTimelineReports();
-        // setTimelineReports(response.reports);
-        setTimelineReports(mockReports);
-      } catch (error) {
-        console.warn('GitHub API 调用失败，使用模拟数据:', error);
-        setTimelineReports(mockReports);
-      }
-    } catch (err) {
-      console.error('Error loading timeline reports:', err);
-      setError('加载时间线失败，请稍后重试');
-    } finally {
-      setIsLoading(false);
-    }
+interface TimelinePageProps {
+  searchParams: {
+    category?: string;
+    year?: string;
+    search?: string;
   };
+}
+
+export default async function TimelinePage({ searchParams }: TimelinePageProps) {
+  // 将searchParams转换为普通对象，避免直接使用Promise
+  const params = {
+    category: searchParams.category || 'all',
+    year: searchParams.year || '2025',
+    search: searchParams.search || ''
+  };
+
+  // 获取真实的导航数据
+  let allReports: TodayReport[] = [];
+  
+  try {
+    // 获取导航数据（包含所有报告）
+    const navigationData = await githubService.getNavigationData();
+    
+    // 将导航数据转换为时间线格式
+    allReports = navigationData.categories.flatMap(categorySection => 
+      categorySection.reports.map(report => ({
+        title: report.title,
+        date: report.date,
+        path: report.path,
+        version: report.version,
+        sourceUrl: report.sourceUrl,
+        category: categorySection.slug
+      }))
+    );
+  } catch (error) {
+    console.warn('Failed to fetch navigation data:', error);
+    // 使用模拟数据作为后备
+    allReports = [
+      // 2025年1月28日
+      {
+        title: "2025年AI发展趋势深度分析报告",
+        date: "2025-01-28",
+        path: "AI_Reports/shi-zheng-yu-guo-ji/ai-trends-2025-01-28--v1.md",
+        version: "v1",
+        sourceUrl: "https://example.com/ai-trends-2025",
+        category: "shi-zheng-yu-guo-ji"
+      },
+      {
+        title: "ChatGPT-5发布对行业影响分析",
+        date: "2025-01-28",
+        path: "AI_Reports/xing-ye-yu-gong-si/chatgpt5-impact-2025-01-28--v1.md",
+        version: "v1",
+        sourceUrl: "https://example.com/chatgpt5-impact",
+        category: "xing-ye-yu-gong-si"
+      },
+      // 2025年1月27日
+      {
+        title: "AI监管政策最新动态解读",
+        date: "2025-01-27",
+        path: "AI_Reports/she-hui-yu-fa-zhi/ai-regulation-2025-01-27--v1.md",
+        version: "v1",
+        sourceUrl: "https://example.com/ai-regulation",
+        category: "she-hui-yu-fa-zhi"
+      },
+      {
+        title: "虚拟现实与AI融合技术分析",
+        date: "2025-01-27",
+        path: "AI_Reports/yu-le-yu-ming-xing/vr-ai-2025-01-27--v1.md",
+        version: "v1",
+        sourceUrl: "https://example.com/vr-ai",
+        category: "yu-le-yu-ming-xing"
+      },
+      // 2025年1月26日
+      {
+        title: "智能旅游助手发展现状分析",
+        date: "2025-01-26",
+        path: "AI_Reports/lv-you-yu-chu-xing/smart-travel-2025-01-26--v1.md",
+        version: "v1",
+        sourceUrl: "https://example.com/smart-travel",
+        category: "lv-you-yu-chu-xing"
+      },
+      {
+        title: "大模型在金融风控中的应用",
+        date: "2025-01-26",
+        path: "AI_Reports/xing-ye-yu-gong-si/ai-fintech-2025-01-26--v1.md",
+        version: "v1",
+        sourceUrl: "https://example.com/ai-fintech",
+        category: "xing-ye-yu-gong-si"
+      }
+    ];
+  }
+
+  // 筛选和搜索
+  const filteredReports = allReports.filter(report => {
+    const matchesCategory = params.category === 'all' || report.category === params.category;
+    const matchesYear = new Date(report.date).getFullYear().toString() === params.year;
+    const matchesSearch = params.search === '' || 
+      report.title.toLowerCase().includes(params.search.toLowerCase());
+    
+    return matchesCategory && matchesYear && matchesSearch;
+  });
+
+  // 按日期分组
+  const groupedReports = filteredReports.reduce((acc, report) => {
+    const date = report.date;
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(report);
+    return acc;
+  }, {} as Record<string, TodayReport[]>);
+
+  // 获取可用年份
+  const availableYears = [...new Set(allReports.map(report => new Date(report.date).getFullYear().toString()))].sort((a, b) => b.localeCompare(a));
 
   const getCategoryInfo = (categorySlug: string): ReportCategory => {
     return REPORT_CATEGORIES.find(cat => cat.slug === categorySlug) || REPORT_CATEGORIES[0];
@@ -127,37 +148,9 @@ export default function TimelinePage() {
     });
   };
 
-  const formatYear = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.getFullYear().toString();
-  };
-
-  // 筛选和搜索
-  const filteredReports = timelineReports.filter(report => {
-    const matchesCategory = selectedCategory === 'all' || report.category === selectedCategory;
-    const matchesYear = formatYear(report.date) === selectedYear;
-    const matchesSearch = searchTerm === '' || 
-      report.title.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesCategory && matchesYear && matchesSearch;
-  });
-
-  // 按日期分组
-  const groupedReports = filteredReports.reduce((acc, report) => {
-    const date = report.date;
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(report);
-    return acc;
-  }, {} as Record<string, TodayReport[]>);
-
-  // 获取可用年份
-  const availableYears = [...new Set(timelineReports.map(report => formatYear(report.date)))].sort((a, b) => b.localeCompare(a));
-
   return (
     <div className="min-h-screen bg-background">
-      <Header onMobileMenuToggle={() => {}} todayReportCount={0} />
+      <Header />
       
       <main className="container mx-auto max-w-6xl px-6 py-12">
         <div className="space-y-8">
@@ -204,8 +197,7 @@ export default function TimelinePage() {
               <input
                 type="text"
                 placeholder="搜索报告标题..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                defaultValue={params.search}
                 className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
               />
             </div>
@@ -216,17 +208,16 @@ export default function TimelinePage() {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground">年份:</span>
                 {availableYears.map((year) => (
-                  <button
+                  <Link
                     key={year}
-                    onClick={() => setSelectedYear(year)}
+                    href={`/timeline?category=${params.category}&year=${year}&search=${params.search}`}
                     className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                      selectedYear === year
+                      year === params.year
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                    }`}
-                  >
+                    }`}>
                     {year}
-                  </button>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -237,65 +228,37 @@ export default function TimelinePage() {
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground">分类:</span>
               </div>
-              <button
-                onClick={() => setSelectedCategory('all')}
+              <Link
+                href={`/timeline?category=all&year=${params.year}&search=${params.search}`}
                 className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  selectedCategory === 'all'
+                  params.category === 'all'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
+                }`}>
                 全部
-              </button>
-              {REPORT_CATEGORIES.map((category) => {
-                const colors = getCategoryColor(category.slug);
+              </Link>
+              {REPORT_CATEGORIES.map((cat) => {
+                const colors = getCategoryColor(cat.slug);
                 
                 return (
-                  <button
-                    key={category.slug}
-                    onClick={() => setSelectedCategory(category.slug)}
+                  <Link
+                    key={cat.slug}
+                    href={`/timeline?category=${cat.slug}&year=${params.year}&search=${params.search}`}
                     className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                      selectedCategory === category.slug
+                      params.category === cat.slug
                         ? 'text-white'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     }`}
-                    style={selectedCategory === category.slug ? { backgroundColor: colors.primary } : {}}
-                  >
-                    {category.display}
-                  </button>
+                    style={params.category === cat.slug ? { backgroundColor: colors.primary } : {}}>
+                    {cat.display}
+                  </Link>
                 );
               })}
             </div>
           </div>
 
           {/* Timeline Content */}
-          {isLoading ? (
-            <div className="space-y-6">
-              <div className="text-center">
-                <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground mx-auto mb-2" />
-                <p className="text-muted-foreground">正在加载时间线...</p>
-              </div>
-              <div className="space-y-6">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="bg-muted rounded-lg h-32"></div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-4">{error}</p>
-              <button 
-                onClick={loadTimelineReports}
-                className="inline-flex items-center space-x-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                <RefreshCw className="h-4 w-4" />
-                <span>重新加载</span>
-              </button>
-            </div>
-          ) : Object.keys(groupedReports).length > 0 ? (
+          {Object.keys(groupedReports).length > 0 ? (
             <div className="space-y-8">
               {/* Timeline */}
               <div className="relative">
@@ -331,8 +294,7 @@ export default function TimelinePage() {
                             return (
                               <div 
                                 key={index} 
-                                className="group bg-card border border-border rounded-lg p-6 hover:shadow-md transition-all"
-                              >
+                                className="group bg-card border border-border rounded-lg p-6 hover:shadow-md transition-all">
                                 <div className="space-y-3">
                                   {/* Header */}
                                   <div className="flex items-center justify-between">
@@ -341,8 +303,7 @@ export default function TimelinePage() {
                                       style={{
                                         backgroundColor: colors.light,
                                         color: colors.primary
-                                      }}
-                                    >
+                                      }}>
                                       {categoryInfo.display}
                                     </span>
                                     <span className="text-xs text-muted-foreground">
@@ -361,8 +322,7 @@ export default function TimelinePage() {
                                   <div className="flex items-center justify-between pt-2">
                                     <Link
                                       href={`/report/${encodeURIComponent(report.path)}`}
-                                      className="inline-flex items-center space-x-2 text-sm font-medium text-primary hover:underline"
-                                    >
+                                      className="inline-flex items-center space-x-2 text-sm font-medium text-primary hover:underline">
                                       <BookOpen className="h-4 w-4" />
                                       <span>阅读报告</span>
                                       <ArrowRight className="h-4 w-4" />
@@ -373,8 +333,7 @@ export default function TimelinePage() {
                                         href={report.sourceUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                                      >
+                                        className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                                         查看原文
                                       </a>
                                     )}
@@ -397,19 +356,14 @@ export default function TimelinePage() {
                 在当前筛选条件下没有找到相关报告，请尝试调整筛选条件。
               </p>
               <div className="space-x-4">
-                <button
-                  onClick={() => {
-                    setSelectedCategory('all');
-                    setSearchTerm('');
-                  }}
-                  className="inline-flex items-center space-x-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors"
-                >
+                <Link
+                  href="/timeline"
+                  className="inline-flex items-center space-x-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors">
                   <span>重置筛选</span>
-                </button>
+                </Link>
                 <Link
                   href="/categories"
-                  className="inline-flex items-center space-x-2 bg-muted text-muted-foreground px-6 py-3 rounded-lg hover:bg-muted/80 transition-colors"
-                >
+                  className="inline-flex items-center space-x-2 bg-muted text-muted-foreground px-6 py-3 rounded-lg hover:bg-muted/80 transition-colors">
                   <span>浏览分类</span>
                   <ArrowRight className="h-4 w-4" />
                 </Link>
