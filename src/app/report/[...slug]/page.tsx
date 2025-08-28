@@ -2,18 +2,15 @@ import React from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, 
-  // Calendar, 
   Clock, 
   ExternalLink,
   BookOpen,
-  // Download,
   Share2,
   Github
 } from 'lucide-react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { MarkdownRenderer } from '@/components/markdown-renderer';
-// import { githubService } from '@/lib/github';
 import { REPORT_CATEGORIES, CATEGORY_COLORS } from '@/constants';
 import { ReportCategory } from '@/types';
 
@@ -31,17 +28,6 @@ interface ReportPageProps {
   params: {
     slug: string[];
   };
-}
-
-interface ReportData {
-  title: string;
-  content: string;
-  date: string;
-  version: string;
-  category: string;
-  sourceUrl?: string;
-  path: string;
-  lastModified: string;
 }
 
 export default function ReportPage({ params }: ReportPageProps) {
@@ -102,20 +88,12 @@ export default function ReportPage({ params }: ReportPageProps) {
     });
   };
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('zh-CN', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const categoryInfo = getCategoryInfo(reportData.category);
   const colors = getCategoryColor(reportData.category);
 
   return (
     <div className="min-h-screen bg-background">
-      <Header onMobileMenuToggle={() => {}} todayReportCount={0} />
+      <Header />
       
       <main className="container mx-auto max-w-4xl px-6 py-8">
         {/* Breadcrumb */}

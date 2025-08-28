@@ -128,7 +128,7 @@ export default function TodayPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header onMobileMenuToggle={() => {}} todayReportCount={todayReports.length} />
+      <Header />
       
       <main className="container mx-auto max-w-6xl px-6 py-12">
         <div className="space-y-8">
