@@ -518,6 +518,10 @@ class GitHubService {
         if (path.startsWith('AI_Reports/')) {
           fullPath = path;
         }
+        // 如果路径包含当前分类名称，则认为它是完整路径，直接使用
+        else if (path.includes(categorySlug)) {
+          fullPath = path;
+        }
         // 否则，认为它是相对路径，添加前缀
         else {
           fullPath = `AI_Reports/${categorySlug}/${path}`;
