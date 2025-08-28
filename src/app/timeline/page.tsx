@@ -1,5 +1,3 @@
-import React from 'react';
-import Link from 'next/link';
 import { 
   Clock, 
   Calendar, 
@@ -15,6 +13,7 @@ import { Footer } from '@/components/footer';
 import { githubService } from '@/lib/github';
 import { REPORT_CATEGORIES, CATEGORY_COLORS } from '@/constants';
 import { TodayReport, ReportCategory } from '@/types';
+import Link from 'next/link';
 
 interface TimelinePageProps {
   searchParams: {
@@ -24,8 +23,10 @@ interface TimelinePageProps {
   };
 }
 
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+
 export default async function TimelinePage({ searchParams }: TimelinePageProps) {
-  // 将searchParams转换为普通对象，避免直接使用Promise
   const params = {
     category: searchParams.category || 'all',
     year: searchParams.year || '2025',
@@ -212,10 +213,11 @@ export default async function TimelinePage({ searchParams }: TimelinePageProps) 
                     key={year}
                     href={`/timeline?category=${params.category}&year=${year}&search=${params.search}`}
                     className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                      year === params.year
+                      year === year
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                    }`}>
+                    }`}
+                  >
                     {year}
                   </Link>
                 ))}
@@ -234,7 +236,8 @@ export default async function TimelinePage({ searchParams }: TimelinePageProps) 
                   params.category === 'all'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}>
+                }`}
+              >
                 全部
               </Link>
               {REPORT_CATEGORIES.map((cat) => {
@@ -249,7 +252,8 @@ export default async function TimelinePage({ searchParams }: TimelinePageProps) 
                         ? 'text-white'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     }`}
-                    style={params.category === cat.slug ? { backgroundColor: colors.primary } : {}}>
+                    style={params.category === cat.slug ? { backgroundColor: colors.primary } : {}}
+                  >
                     {cat.display}
                   </Link>
                 );
@@ -294,7 +298,8 @@ export default async function TimelinePage({ searchParams }: TimelinePageProps) 
                             return (
                               <div 
                                 key={index} 
-                                className="group bg-card border border-border rounded-lg p-6 hover:shadow-md transition-all">
+                                className="group bg-card border border-border rounded-lg p-6 hover:shadow-md transition-all"
+                              >
                                 <div className="space-y-3">
                                   {/* Header */}
                                   <div className="flex items-center justify-between">
@@ -303,7 +308,8 @@ export default async function TimelinePage({ searchParams }: TimelinePageProps) 
                                       style={{
                                         backgroundColor: colors.light,
                                         color: colors.primary
-                                      }}>
+                                      }}
+                                    >
                                       {categoryInfo.display}
                                     </span>
                                     <span className="text-xs text-muted-foreground">
@@ -322,7 +328,8 @@ export default async function TimelinePage({ searchParams }: TimelinePageProps) 
                                   <div className="flex items-center justify-between pt-2">
                                     <Link
                                       href={`/report/${encodeURIComponent(report.path)}`}
-                                      className="inline-flex items-center space-x-2 text-sm font-medium text-primary hover:underline">
+                                      className="inline-flex items-center space-x-2 text-sm font-medium text-primary hover:underline"
+                                    >
                                       <BookOpen className="h-4 w-4" />
                                       <span>阅读报告</span>
                                       <ArrowRight className="h-4 w-4" />
@@ -333,7 +340,8 @@ export default async function TimelinePage({ searchParams }: TimelinePageProps) 
                                         href={report.sourceUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                                      >
                                         查看原文
                                       </a>
                                     )}
@@ -358,12 +366,14 @@ export default async function TimelinePage({ searchParams }: TimelinePageProps) 
               <div className="space-x-4">
                 <Link
                   href="/timeline"
-                  className="inline-flex items-center space-x-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors">
+                  className="inline-flex items-center space-x-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors"
+                >
                   <span>重置筛选</span>
                 </Link>
                 <Link
                   href="/categories"
-                  className="inline-flex items-center space-x-2 bg-muted text-muted-foreground px-6 py-3 rounded-lg hover:bg-muted/80 transition-colors">
+                  className="inline-flex items-center space-x-2 bg-muted text-muted-foreground px-6 py-3 rounded-lg hover:bg-muted/80 transition-colors"
+                >
                   <span>浏览分类</span>
                   <ArrowRight className="h-4 w-4" />
                 </Link>

@@ -391,6 +391,12 @@ class GitHubService {
     return displayMap[slug] || slug;
   }
 
+  // 从路径提取分类
+  private extractCategoryFromPath(path: string): string {
+    const pathParts = path.split('/');
+    return pathParts[pathParts.length - 2] || '';
+  }
+
   // 从路径提取标题
   private extractTitleFromPath(path: string): string {
     const filename = path.split('/').pop() || '';
