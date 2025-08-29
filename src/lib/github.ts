@@ -372,12 +372,25 @@ class GitHubService {
     try {
       const content = await this.getFileContent(path);
       const parsed = matter(content);
-      
+      const body = parsed.content || content;
+
+      // 优先从正文提取标题（# 标题 或 “主题:” 行），否则回退到文件名
+      const titleFromContent = this.extractTitleFromContent(body);
+      const title = titleFromContent || this.extractTitleFromPath(path);
+
+      // 基础元数据（文件名与 frontmatter）
+      const metadata = this.parseReportMetadata(path, parsed.data);
+
+      // 若 frontmatter 未提供来源，则从正文附近提取 URL
+      if (!metadata.source) {
+        metadata.source = this.extractSourceUrl(title, content);
+      }
+
       const result: ReportContent = {
         raw: content,
-        metadata: this.parseReportMetadata(path, parsed.data),
-        content: parsed.content,
-        title: this.extractTitleFromPath(path)
+        metadata,
+        content: body,
+        title
       };
 
       this.setCache(cacheKey, result);
@@ -447,6 +460,39 @@ class GitHubService {
   }
 
   // 获取分类显示名称
+  // 从正文提取标题（优先 Markdown 标题、其次“主题:”行、最后首个有效文本行）
+  private extractTitleFromContent(content: string): string {
+    // 1) Markdown 标题（# / ## / ...）
+    const heading = content.match(/^\s{0,3}#{1,6}\s+(.+?)\s*$/m);
+    if (heading?.[1]) {
+      return heading[1].trim();
+    }
+    // 2) 主题: 标题 / Title: xxx
+    const subject = content.match(/^\s*(?:主题|Title)\s*[:：]\s*(.+)\s*$/m);
+    if (subject?.[1]) {
+      return subject[1].trim();
+    }
+    // 3) 回退：首个非空且非元数据行
+    const lines = content.split('\n');
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t) continue;
+      if (/^(版次|日期|来源)\s*[:：]/.test(t)) continue;
+      return t.replace(/^[-*\s]+/, '').trim();
+    }
+    return '';
+  }
+
+  // 从正文提取来源链接
+  private extractSourceFromReportContent(content: string): string {
+    // 兼容 “来源: [text](url)” 或 “来源: url”
+    const m = content.match(/^\s*来源\s*[:：]\s*(?:\[[^\]]*\]\((https?:\/\/[^)\s]+)\)|(https?:\/\/[^\s)]+))/m);
+    if (m) {
+      return (m[1] || m[2] || '').trim();
+    }
+    const url = content.match(/https?:\/\/[^\s)\]]+/);
+    return url ? url[0] : '';
+  }
   private getCategoryDisplay(slug: string): string {
     const displayMap: Record<string, string> = {
       'shi-zheng-yu-guo-ji': '时政与国际',
@@ -554,23 +600,31 @@ class GitHubService {
     const lines = content.split('\n');
     
     for (const line of lines) {
-      // 匹配报告链接格式: - [标题](路径) - 日期 (版本) [来源](链接)
-      // 注意前面有 "- " 前缀
+      // 匹配报告链接格式: - [标题](路径)
       const match = line.match(/-\s*\[([^\]]+)\]\(([^)]+)\)/);
       if (match) {
-        const [, title, path] = match;
-        
-        // 确保路径是正确的完整路径
-        let fullPath = path;
-        if (!path.startsWith('AI_Reports/')) {
+        const [, title, raw] = match;
+
+        // 规范化路径，去掉前缀 ./ 或 /
+        const path = raw.replace(/^\.\//, '').replace(/^\/+/, '');
+        let fullPath = '';
+
+        if (path.startsWith('AI_Reports/')) {
+          // 已是完整路径
+          fullPath = path;
+        } else if (path.startsWith(`${categorySlug}/`)) {
+          // 形如: she-hui-yu-fa-zhi/xxx.md  → AI_Reports/she-hui-yu-fa-zhi/xxx.md
+          fullPath = `AI_Reports/${path}`;
+        } else {
+          // 形如: xxx.md  → AI_Reports/{categorySlug}/xxx.md
           fullPath = `AI_Reports/${categorySlug}/${path}`;
         }
         
         reports.push({
           name: title,
           path: fullPath,
-          content: '', // 内容在需要时通过getReportContent获取
-          sha: '' // SHA在需要时通过getFileContent获取
+          content: '', // 内容在需要时通过 getReportContent 获取
+          sha: ''      // SHA 在需要时通过其他 API 获取
         });
       }
     }

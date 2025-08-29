@@ -15,9 +15,29 @@ export default function Home() {
   const [todayReports, setTodayReports] = useState<TodayReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     loadTodayReports();
+  }, []);
+
+  // 拉取 NAVIGATION.md，计算分类报告数量，修复首页“分类浏览显示为 0 篇报告”
+  useEffect(() => {
+    const loadCategoryCounts = async () => {
+      try {
+        const nav = await githubService.getNavigationData();
+        const map: Record<string, number> = {};
+        for (const section of nav.categories) {
+          const slug = section.slug;
+          const count = section.reports?.length || 0;
+          map[slug] = (map[slug] || 0) + count;
+        }
+        setCategoryCounts(map);
+      } catch {
+        // 忽略错误，保持默认 0
+      }
+    };
+    loadCategoryCounts();
   }, []);
 
   const loadTodayReports = async () => {
@@ -241,7 +261,7 @@ export default function Home() {
                         </div>
                         
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>{category.count} 篇报告</span>
+                          <span>{categoryCounts[category.slug] ?? 0} 篇报告</span>
                           <ArrowRight className="h-3 w-3 group-hover:text-primary transition-colors" />
                         </div>
                       </div>
