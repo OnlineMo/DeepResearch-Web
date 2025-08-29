@@ -107,8 +107,18 @@ export default function Home() {
           onClose={() => setIsSidebarOpen(false)}
           onCategoryChange={(slug) => router.push(`/category/${slug}`)}
           onDateRangeChange={(range) => {
+            if (!range) {
+              const y = new Date().getFullYear().toString();
+              router.push(`/timeline/all/${y}/`);
+              return;
+            }
             const y = new Date(range.start).getFullYear().toString();
-            router.push(`/timeline/all/${y}`);
+            const pad = (n: number) => String(n).padStart(2, '0');
+            const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+            const start = fmt(new Date(range.start));
+            const end = fmt(new Date(range.end ?? range.start));
+            const qs = new URLSearchParams({ start, end }).toString();
+            router.push(`/timeline/all/${y}/?${qs}`);
           }}
           categoryCounts={categoryCounts}
         />

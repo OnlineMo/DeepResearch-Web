@@ -11,7 +11,7 @@ interface SidebarProps {
   selectedCategory?: string;
   selectedDateRange?: { start: Date; end: Date };
   onCategoryChange?: (category: string) => void;
-  onDateRangeChange?: (range: { start: Date; end: Date }) => void;
+  onDateRangeChange?: (range?: { start: Date; end: Date }) => void;
   categoryCounts?: Record<string, number>;
 }
 
@@ -50,7 +50,10 @@ export function Sidebar({
   };
 
   const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   };
 
   return (
@@ -242,6 +245,7 @@ export function Sidebar({
                     <button
                       onClick={() => {
                         setLocalRange(undefined);
+                        onDateRangeChange?.(undefined);
                       }}
                       className="rounded-md border border-input bg-background px-2 py-1 text-xs hover:bg-accent hover:text-accent-foreground"
                     >
