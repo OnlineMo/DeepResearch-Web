@@ -111,10 +111,10 @@ export default async function TimelinePage({ params }: { params: { category?: st
         {
           title: "智能旅游助手发展现状分析",
           date: "2025-01-26",
-          path: "AI_Reports/lv-you-yu-chu-xing/smart-travel-2025-01-26--v1.md",
+          path: "AI_Reports/lu-you-yu-chu-xing/smart-travel-2025-01-26--v1.md",
           version: "v1",
           sourceUrl: "https://example.com/smart-travel",
-          category: "lv-you-yu-chu-xing"
+          category: "lu-you-yu-chu-xing"
         },
         {
           title: "大模型在金融风控中的应用",
@@ -217,7 +217,7 @@ export default async function TimelinePage({ params }: { params: { category?: st
                 {availableYears.map((yr) => (
                   <Link
                     key={yr}
-                    href={`/timeline/${category}/${yr}`}
+                    href={`/timeline/${category}/${yr}/`}
                     className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                       yr === year
                         ? 'bg-primary text-primary-foreground'
@@ -237,7 +237,7 @@ export default async function TimelinePage({ params }: { params: { category?: st
                 <span className="text-sm font-medium text-foreground">分类:</span>
               </div>
               <Link
-                href={`/timeline/all/${year}`}
+                href={`/timeline/all/${year}/`}
                 className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                   category === 'all'
                     ? 'bg-primary text-primary-foreground'
@@ -252,7 +252,7 @@ export default async function TimelinePage({ params }: { params: { category?: st
                 return (
                   <Link
                     key={cat.slug}
-                    href={`/timeline/${cat.slug}/${year}`}
+                    href={`/timeline/${cat.slug}/${year}/`}
                     className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                       category === cat.slug
                         ? 'text-white'
@@ -371,7 +371,7 @@ export default async function TimelinePage({ params }: { params: { category?: st
               </p>
               <div className="space-x-4">
                 <Link
-                  href="/timeline"
+                  href="/timeline/"
                   className="inline-flex items-center space-x-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors"
                 >
                   <span>重置筛选</span>

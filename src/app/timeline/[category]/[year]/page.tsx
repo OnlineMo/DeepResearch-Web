@@ -1,4 +1,10 @@
-// 复用已有的时间线实现，为动态路由提供页面
-export { default } from '../../page';
-export { generateStaticParams } from '../../page';
+import TimelinePage, { generateStaticParams as _generateStaticParams } from '../../page';
+
+export default TimelinePage;
+
+// 明确在动态路由下导出静态参数，确保静态导出生成对应路径
+export async function generateStaticParams() {
+ return _generateStaticParams();
+}
+
 export const dynamicParams = true;
