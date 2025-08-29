@@ -71,10 +71,10 @@ export default function TodayPage() {
         {
           title: "智能旅游助手发展现状分析",
           date: "2025-01-28",
-          path: "AI_Reports/lv-you-yu-chu-xing/smart-travel-2025-01-28--v1.md",
+          path: "AI_Reports/lu-you-yu-chu-xing/smart-travel-2025-01-28--v1.md",
           version: "v1",
           sourceUrl: "https://example.com/smart-travel",
-          category: "lv-you-yu-chu-xing"
+          category: "lu-you-yu-chu-xing"
         }
       ];
       

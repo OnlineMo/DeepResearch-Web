@@ -20,7 +20,7 @@ export const dynamicParams = true;
 
 // 为静态导出生成参数
 export async function generateStaticParams() {
-  const categories = ['all', 'shi-zheng-yu-guo-ji', 'she-hui-yu-fa-zhi', 'yu-le-yu-ming-xing', 'xing-ye-yu-gong-si', 'lv-you-yu-chu-xing'];
+  const categories = ['all', 'shi-zheng-yu-guo-ji', 'she-hui-yu-fa-zhi', 'yu-le-yu-ming-xing', 'xing-ye-yu-gong-si', 'lu-you-yu-chu-xing'];
   const years = ['2025', '2024']; // 可以根据实际数据调整年份
   
   // 生成所有可能的参数组合

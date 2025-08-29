@@ -127,7 +127,7 @@ class GitHubService {
     }
   }
 
-  // 获取今日报告 (README.md)
+  // 获取今日报告 (README.md) - 带 raw.githubusercontent.com 回退
   async getTodayReports(): Promise<TodayReportsResponse> {
     const cacheKey = 'today-reports';
     const cached = this.getCached<TodayReportsResponse>(cacheKey);
@@ -146,7 +146,7 @@ class GitHubService {
 
       const content = this.decodeBase64Utf8(response.data.content as string);
       const reports = this.parseReadmeReports(content);
-      
+
       const result: TodayReportsResponse = {
         date: new Date().toISOString().split('T')[0],
         rawContent: content,
@@ -157,6 +157,24 @@ class GitHubService {
       return result;
     } catch (error) {
       console.error('Error fetching today reports:', error);
+      // 回退到 raw.githubusercontent.com
+      try {
+        const url = 'https://raw.githubusercontent.com/OnlineMo/DeepResearch-Archive/main/README.md';
+        const res = await fetch(url, { cache: 'no-store' });
+        if (res.ok) {
+          const content = await res.text();
+          const reports = this.parseReadmeReports(content);
+          const result: TodayReportsResponse = {
+            date: new Date().toISOString().split('T')[0],
+            rawContent: content,
+            reports
+          };
+          this.setCache(cacheKey, result);
+          return result;
+        }
+      } catch (fallbackErr) {
+        console.error('Fallback fetching today reports failed:', fallbackErr);
+      }
       throw new Error('获取今日报告失败');
     }
   }
@@ -217,7 +235,7 @@ class GitHubService {
     return '';
   }
 
-  // 获取完整导航 (NAVIGATION.md)
+  // 获取完整导航 (NAVIGATION.md) - 带 raw.githubusercontent.com 回退
   async getNavigationData(): Promise<NavigationResponse> {
     const cacheKey = 'navigation-data';
     const cached = this.getCached<NavigationResponse>(cacheKey);
@@ -246,6 +264,23 @@ class GitHubService {
       return result;
     } catch (error) {
       console.error('Error fetching navigation data:', error);
+      // 回退到 raw.githubusercontent.com
+      try {
+        const url = 'https://raw.githubusercontent.com/OnlineMo/DeepResearch-Archive/main/NAVIGATION.md';
+        const res = await fetch(url, { cache: 'no-store' });
+        if (res.ok) {
+          const content = await res.text();
+          const categories = this.parseNavigationData(content);
+          const result: NavigationResponse = {
+            rawContent: content,
+            categories
+          };
+          this.setCache(cacheKey, result);
+          return result;
+        }
+      } catch (fallbackErr) {
+        console.error('Fallback fetching navigation data failed:', fallbackErr);
+      }
       throw new Error('获取导航数据失败');
     }
   }
@@ -568,7 +603,7 @@ class GitHubService {
     }
   }
 
-  // 获取Reports.md文件内容
+  // 获取Reports.md文件内容 - 带 raw.githubusercontent.com 回退
   async getCategoryReportsIndex(categorySlug: string): Promise<string> {
     try {
       const response = await this.octokit.rest.repos.getContent({
@@ -584,6 +619,16 @@ class GitHubService {
       return this.decodeBase64Utf8(response.data.content as string);
     } catch (error) {
       console.error(`Error fetching Reports.md for category ${categorySlug}:`, error);
+      // 回退到 raw.githubusercontent.com
+      try {
+        const url = `https://raw.githubusercontent.com/OnlineMo/DeepResearch-Archive/main/AI_Reports/${categorySlug}/Reports.md`;
+        const res = await fetch(url, { cache: 'no-store' });
+        if (res.ok) {
+          return await res.text();
+        }
+      } catch (fallbackErr) {
+        console.error(`Fallback fetching Reports.md failed for ${categorySlug}:`, fallbackErr);
+      }
       // 返回默认的Reports.md内容
       return `# ${this.getCategoryDisplay(categorySlug)} Reports
 

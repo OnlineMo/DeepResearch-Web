@@ -15,6 +15,7 @@ export function Header({ onMobileMenuToggle, todayReportCount = 0 }: HeaderProps
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { theme, setTheme } = useTheme();
+  const currentYear = new Date().getFullYear().toString();
 
   const handleMobileMenuToggle = () => {
     const newState = !isMobileMenuOpen;
@@ -96,7 +97,7 @@ export function Header({ onMobileMenuToggle, todayReportCount = 0 }: HeaderProps
               分类浏览
             </Link>
             <Link
-              href="/timeline"
+              href={`/timeline/all/${currentYear}`}
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               时间线
@@ -186,7 +187,7 @@ export function Header({ onMobileMenuToggle, todayReportCount = 0 }: HeaderProps
                 分类浏览
               </Link>
               <Link
-                href="/timeline"
+                href={`/timeline/all/${currentYear}`}
                 className="block rounded-md px-3 py-2 text-base font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 onClick={() => setIsMobileMenuOpen(false)}
               >

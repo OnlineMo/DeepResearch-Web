@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Calendar, TrendingUp, BookOpen, Clock, ArrowRight, Sparkles } from 'lucide-react';
 import { Header } from '@/components/header';
 import { Sidebar } from '@/components/sidebar';
@@ -16,25 +17,34 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
+  const [totalReports, setTotalReports] = useState<number>(0);
+  const [categoriesCount, setCategoriesCount] = useState<number>(REPORT_CATEGORIES.length);
+  const router = useRouter();
 
   useEffect(() => {
     loadTodayReports();
   }, []);
 
-  // 拉取 NAVIGATION.md，计算分类报告数量，修复首页“分类浏览显示为 0 篇报告”
+  // 拉取 NAVIGATION.md，计算分类报告数量与总数
   useEffect(() => {
     const loadCategoryCounts = async () => {
       try {
         const nav = await githubService.getNavigationData();
         const map: Record<string, number> = {};
+        let total = 0;
         for (const section of nav.categories) {
           const slug = section.slug;
           const count = section.reports?.length || 0;
           map[slug] = (map[slug] || 0) + count;
+          total += count;
         }
         setCategoryCounts(map);
+        setTotalReports(total);
+        setCategoriesCount(nav.categories.length || REPORT_CATEGORIES.length);
       } catch {
-        // 忽略错误，保持默认 0
+        // 忽略错误，保持默认值
+        setTotalReports(0);
+        setCategoriesCount(REPORT_CATEGORIES.length);
       }
     };
     loadCategoryCounts();
@@ -91,9 +101,14 @@ export default function Home() {
       />
       
       <div className="flex">
-        <Sidebar 
+        <Sidebar
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
+          onCategoryChange={(slug) => router.push(`/category/${slug}`)}
+          onDateRangeChange={(range) => {
+            const y = new Date(range.start).getFullYear().toString();
+            router.push(`/timeline/all/${y}`);
+          }}
         />
         
         <main className="flex-1 p-6 lg:p-8">
@@ -282,7 +297,7 @@ export default function Home() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-foreground">
-                      {REPORT_CATEGORIES.reduce((sum, cat) => sum + cat.count, 0) || '156'}
+                      {totalReports}
                     </p>
                     <p className="text-sm text-muted-foreground">总报告数</p>
                   </div>
@@ -295,7 +310,7 @@ export default function Home() {
                     <TrendingUp className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{REPORT_CATEGORIES.length}</p>
+                    <p className="text-2xl font-bold text-foreground">{categoriesCount}</p>
                     <p className="text-sm text-muted-foreground">分类数量</p>
                   </div>
                 </div>

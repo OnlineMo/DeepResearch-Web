@@ -12,9 +12,9 @@ interface MarkdownRendererProps {
   className?: string;
 }
 
-// 简单规则：将常见的小节标题行标准化为 Markdown 二级标题
+// 加强规则：将常见的小节标题（含编号/括号/冒号等变体）标准化为 Markdown 二级标题
 function normalizeHeadings(src: string): string {
-  const heads = [
+  const keys = [
     '摘要',
     '背景',
     '深度分析',
@@ -24,17 +24,37 @@ function normalizeHeadings(src: string): string {
     '结论',
     '建议'
   ];
-  const lines = src.split('\n').map((line) => {
+  const keySet = new Set(keys);
+
+  return src.split('\n').map((line) => {
     const trimmed = line.trim();
-    for (const h of heads) {
-      const re = new RegExp(`^${h}\\s*[:：]?\\s*$`);
-      if (re.test(trimmed)) {
-        return `## ${h}`;
-      }
+
+    // 已是 Markdown 标题则跳过
+    if (/^\s{0,3}#{1,6}\s+/.test(trimmed)) return line;
+
+    // 规范化：去除前导引用符/括号/编号/装饰符，和末尾的括号/冒号/破折号
+    let t = trimmed;
+
+    // 去除前导的 > 、空白与左括号
+    t = t.replace(/^[>\s]*[（(【\[]?\s*/, '');
+
+    // 去除编号前缀：一、/1. /第X条 等
+    t = t.replace(/^(?:第?\s*[一二三四五六七八九十0-9]+[、.)）]\s*)/, '');
+
+    // 去除包裹性右括号
+    t = t.replace(/[】\]）)]+$/, '');
+
+    // 去掉结尾的冒号/全角冒号/破折号
+    t = t.replace(/\s*(?:[:：—\-]+)\s*$/, '');
+
+    // 再次去掉常见的装饰性长破折号
+    t = t.replace(/[—\-]+/g, '').trim();
+
+    if (keySet.has(t)) {
+      return `## ${t}`;
     }
     return line;
-  });
-  return lines.join('\n');
+  }).join('\n');
 }
 
 // 将裸露 URL 自动包成 <url> 让 marked/GFM 识别为链接

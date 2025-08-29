@@ -19,7 +19,7 @@ import { ReportCategory } from '@/types';
 export async function generateStaticParams() {
   // 返回一些示例路径用于静态生成
   return [
-    { slug: ['AI_Reports', 'lv-you-yu-chu-xing', 'zhe-jiang-yi-ce-suo-gao-du-huan-yuan-yu-xu-gong-yin-liang-tan-2025-08-28--v1.md'] },
+    { slug: ['AI_Reports', 'lu-you-yu-chu-xing', 'zhe-jiang-yi-ce-suo-gao-du-huan-yuan-yu-xu-gong-yin-liang-tan-2025-08-28--v1.md'] },
     { slug: ['AI_Reports', 'shi-zheng-yu-guo-ji', 'ai-trends-2025-01-28--v1.md'] },
     { slug: ['AI_Reports', 'xing-ye-yu-gong-si', 'chatgpt5-impact-2025-01-28--v1.md'] }
   ];
