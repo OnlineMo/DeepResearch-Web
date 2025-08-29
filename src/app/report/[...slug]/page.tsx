@@ -77,16 +77,16 @@ export default async function ReportPage({ params }: ReportPageProps) {
         lastModified: new Date().toISOString()
       };
     } else {
-      // 使用模拟数据作为后备
+      // 使用默认的报告未找到内容
       reportData = {
         title: "报告未找到",
         content: "# 报告未找到\n\n抱歉，您请求的报告不存在或暂时无法访问。",
-        date: "2025-08-28",
+        date: new Date().toISOString().split('T')[0],
         version: "v1",
         category: "shi-zheng-yu-guo-ji",
         sourceUrl: "",
         path: fullPath,
-        lastModified: "2025-08-28T10:30:00Z"
+        lastModified: new Date().toISOString()
       };
     }
   }

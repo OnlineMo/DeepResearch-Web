@@ -95,17 +95,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         category: categorySlug
       }];
     } else {
-      // 使用模拟数据作为后备
-      categoryReports = [
-        {
-          title: "浙江一测所高度还原预渲染技术深度分析",
-          date: "2025-08-28",
-          path: `AI_Reports/${categorySlug}/zhe-jiang-yi-ce-suo-gao-du-huan-yuan-yu-xu-gong-yin-liang-tan-2025-08-28--v1.md`,
-          version: "v1",
-          sourceUrl: "https://example.com/source-report",
-          category: categorySlug
-        }
-      ];
+      // 使用空数组而不是模拟数据
+      categoryReports = [];
     }
   }
 

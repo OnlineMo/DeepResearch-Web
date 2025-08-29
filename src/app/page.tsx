@@ -25,50 +25,19 @@ export default function Home() {
       setIsLoading(true);
       setError(null);
       
-      // 模拟数据，因为实际的 GitHub API 可能无法访问
-      // 在实际部署时，这里会调用真实的 GitHub API
-      const mockReports: TodayReport[] = [
-        {
-          title: "2025年AI发展趋势深度分析报告",
-          date: "2025-01-28",
-          path: "AI_Reports/shi-zheng-yu-guo-ji/ai-trends-2025-01-28--v1.md",
-          version: "v1",
-          sourceUrl: "https://example.com/ai-trends-2025",
-          category: "shi-zheng-yu-guo-ji"
-        },
-        {
-          title: "ChatGPT-5发布对行业影响分析",
-          date: "2025-01-28",
-          path: "AI_Reports/xing-ye-yu-gong-si/chatgpt5-impact-2025-01-28--v1.md",
-          version: "v1",
-          sourceUrl: "https://example.com/chatgpt5-impact",
-          category: "xing-ye-yu-gong-si"
-        },
-        {
-          title: "AI监管政策最新动态解读",
-          date: "2025-01-28",
-          path: "AI_Reports/she-hui-yu-fa-zhi/ai-regulation-2025-01-28--v1.md",
-          version: "v1",
-          sourceUrl: "https://example.com/ai-regulation",
-          category: "she-hui-yu-fa-zhi"
-        }
-      ];
-      
-      // 尝试真实的 API 调用，如果失败则使用模拟数据
-      try {
-        const response = await githubService.getTodayReports();
-        setTodayReports(response.reports);
-      } catch (error: unknown) {
-        console.warn('GitHub API 调用失败，使用模拟数据:', error);
-        // 如果是速率限制错误，显示更友好的错误信息
-        if (error instanceof Error && error.message.includes('API速率限制')) {
-          setError('API速率限制，请稍后再试');
-        }
-        setTodayReports(mockReports);
+      // 尝试真实的 API 调用
+      const response = await githubService.getTodayReports();
+      setTodayReports(response.reports);
+    } catch (error: unknown) {
+      console.warn('GitHub API 调用失败:', error);
+      // 如果是速率限制错误，显示更友好的错误信息
+      if (error instanceof Error && error.message.includes('API速率限制')) {
+        setError('API速率限制，请稍后再试');
+      } else {
+        setError('加载今日报告失败，请稍后重试');
       }
-    } catch (err) {
-      console.error('Error loading today reports:', err);
-      setError('加载今日报告失败，请稍后重试');
+      // 使用空数组而不是模拟数据
+      setTodayReports([]);
     } finally {
       setIsLoading(false);
     }

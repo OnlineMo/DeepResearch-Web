@@ -20,8 +20,16 @@ class GitHubService {
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5分钟缓存
 
   constructor(token?: string) {
+    // 优先使用传入的token，然后是环境变量，最后是undefined
+    const authToken = token || process.env.GITHUB_TOKEN || undefined;
+    
+    // 如果环境变量未设置，记录警告信息
+    if (!authToken) {
+      console.warn('警告: 未配置GITHUB_TOKEN环境变量，API请求限制为60次/小时');
+    }
+    
     this.octokit = new Octokit({
-      auth: token || process.env.GITHUB_TOKEN,
+      auth: authToken,
     });
   }
 
@@ -507,47 +515,26 @@ class GitHubService {
     for (const line of lines) {
       // 匹配报告链接格式: - [标题](路径) - 日期 (版本) [来源](链接)
       // 注意前面有 "- " 前缀
-      // 改进的正则表达式，更灵活地匹配路径
       const match = line.match(/-\s*\[([^\]]+)\]\(([^)]+)\)/);
       if (match) {
         const [, title, path] = match;
         
         // 确保路径是正确的完整路径
         let fullPath = path;
-        // 如果路径已经以 AI_Reports/ 开头，则认为它是完整路径，直接使用
-        if (path.startsWith('AI_Reports/')) {
-          fullPath = path;
-        }
-        // 如果路径已经包含分类信息，则认为它是完整路径，直接使用
-        else if (path.includes('/')) {
-          fullPath = path;
-        }
-        // 如果路径包含当前分类名称，则认为它是完整路径，直接使用
-        else if (path.includes(categorySlug)) {
-          fullPath = path;
-        }
-        // 否则，认为它是相对路径，添加前缀
-        else {
+        if (!path.startsWith('AI_Reports/')) {
           fullPath = `AI_Reports/${categorySlug}/${path}`;
-        }
-        
-        // 确保路径总是以 AI_Reports/ 开头
-        if (!fullPath.startsWith('AI_Reports/')) {
-          fullPath = `AI_Reports/${categorySlug}/${fullPath}`;
         }
         
         reports.push({
           name: title,
           path: fullPath,
-          content: '', // 内容需要单独获取
-          sha: '' // SHA需要单独获取
+          content: '', // 内容在需要时通过getReportContent获取
+          sha: '' // SHA在需要时通过getFileContent获取
         });
       }
     }
     
-    // 使用categorySlug参数以避免ESLint警告
     console.log(`Parsed ${reports.length} reports for category: ${categorySlug}`);
-    
     return reports;
   }
 
