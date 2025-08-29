@@ -33,7 +33,8 @@ interface ReportPageProps {
 
 export default async function ReportPage({ params }: ReportPageProps) {
   // 重建完整路径
-  const fullPath = decodeURIComponent(params.slug.join('/'));
+  // 不要解码整个路径，而是分别处理每个部分
+  const fullPath = params.slug.map(part => decodeURIComponent(part)).join('/');
 
   // 获取真实的报告数据
   let reportData: {
