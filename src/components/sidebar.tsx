@@ -12,6 +12,7 @@ interface SidebarProps {
   selectedDateRange?: { start: Date; end: Date };
   onCategoryChange?: (category: string) => void;
   onDateRangeChange?: (range: { start: Date; end: Date }) => void;
+  categoryCounts?: Record<string, number>;
 }
 
 export function Sidebar({
@@ -20,11 +21,13 @@ export function Sidebar({
   selectedCategory,
   selectedDateRange,
   onCategoryChange,
-  onDateRangeChange
+  onDateRangeChange,
+  categoryCounts
 }: SidebarProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['categories', 'filters'])
   );
+  const [localRange, setLocalRange] = useState<{ start: Date; end: Date } | undefined>(selectedDateRange);
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -122,7 +125,7 @@ export function Sidebar({
                           {category.description}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {category.count} 篇报告
+                          {(categoryCounts?.[category.slug] ?? category.count)} 篇报告
                         </p>
                       </div>
                       {isSelected && (
@@ -166,13 +169,13 @@ export function Sidebar({
                   <div className="space-y-2">
                     <input
                       type="date"
-                      value={selectedDateRange?.start ? formatDate(selectedDateRange.start) : ''}
+                      value={localRange?.start ? formatDate(localRange.start) : ''}
                       onChange={(e) => {
-                        if (e.target.value && selectedDateRange) {
-                          onDateRangeChange?.({
-                            start: new Date(e.target.value),
-                            end: selectedDateRange.end
-                          });
+                        if (e.target.value) {
+                          const newStart = new Date(e.target.value);
+                          const next = { start: newStart, end: localRange?.end ?? newStart };
+                          setLocalRange(next);
+                          onDateRangeChange?.(next);
                         }
                       }}
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background file:border-0 file:bg-transparent file:text-xs file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -180,13 +183,13 @@ export function Sidebar({
                     />
                     <input
                       type="date"
-                      value={selectedDateRange?.end ? formatDate(selectedDateRange.end) : ''}
+                      value={localRange?.end ? formatDate(localRange.end) : ''}
                       onChange={(e) => {
-                        if (e.target.value && selectedDateRange) {
-                          onDateRangeChange?.({
-                            start: selectedDateRange.start,
-                            end: new Date(e.target.value)
-                          });
+                        if (e.target.value) {
+                          const newEnd = new Date(e.target.value);
+                          const next = { start: localRange?.start ?? newEnd, end: newEnd };
+                          setLocalRange(next);
+                          onDateRangeChange?.(next);
                         }
                       }}
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background file:border-0 file:bg-transparent file:text-xs file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -204,10 +207,9 @@ export function Sidebar({
                     <button
                       onClick={() => {
                         const today = new Date();
-                        onDateRangeChange?.({
-                          start: today,
-                          end: today
-                        });
+                        const next = { start: today, end: today };
+                        setLocalRange(next);
+                        onDateRangeChange?.(next);
                       }}
                       className="rounded-md border border-input bg-background px-2 py-1 text-xs hover:bg-accent hover:text-accent-foreground"
                     >
@@ -217,10 +219,9 @@ export function Sidebar({
                       onClick={() => {
                         const today = new Date();
                         const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-                        onDateRangeChange?.({
-                          start: lastWeek,
-                          end: today
-                        });
+                        const next = { start: lastWeek, end: today };
+                        setLocalRange(next);
+                        onDateRangeChange?.(next);
                       }}
                       className="rounded-md border border-input bg-background px-2 py-1 text-xs hover:bg-accent hover:text-accent-foreground"
                     >
@@ -230,10 +231,9 @@ export function Sidebar({
                       onClick={() => {
                         const today = new Date();
                         const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-                        onDateRangeChange?.({
-                          start: lastMonth,
-                          end: today
-                        });
+                        const next = { start: lastMonth, end: today };
+                        setLocalRange(next);
+                        onDateRangeChange?.(next);
                       }}
                       className="rounded-md border border-input bg-background px-2 py-1 text-xs hover:bg-accent hover:text-accent-foreground"
                     >
@@ -241,7 +241,7 @@ export function Sidebar({
                     </button>
                     <button
                       onClick={() => {
-                        // 重置日期范围
+                        setLocalRange(undefined);
                       }}
                       className="rounded-md border border-input bg-background px-2 py-1 text-xs hover:bg-accent hover:text-accent-foreground"
                     >
@@ -260,7 +260,9 @@ export function Sidebar({
               <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">总报告数</span>
                 <span className="font-medium">
-                  {REPORT_CATEGORIES.reduce((sum, cat) => sum + cat.count, 0)}
+                  {typeof categoryCounts === 'object'
+                    ? Object.values(categoryCounts).reduce((sum, v) => sum + (v || 0), 0)
+                    : REPORT_CATEGORIES.reduce((sum, cat) => sum + cat.count, 0)}
                 </span>
               </div>
               <div className="flex justify-between text-xs">

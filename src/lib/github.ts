@@ -12,7 +12,7 @@ import {
   UpdateStatus,
   ReportMetadata
 } from '@/types';
-import { GITHUB_CONFIG, API_PATHS } from '@/constants';
+import { GITHUB_CONFIG, API_PATHS, REPORT_CATEGORIES } from '@/constants';
 
 class GitHubService {
   private octokit: Octokit;
@@ -285,44 +285,49 @@ class GitHubService {
     }
   }
 
-  // 解析导航数据
+  // 解析导航数据（更鲁棒：支持 #~######，并仅识别 5 个已知分类）
   private parseNavigationData(content: string): CategorySection[] {
     const categories: CategorySection[] = [];
     const lines = content.split('\n');
     let currentCategory: CategorySection | null = null;
-    
-    for (const line of lines) {
-      // 匹配分类标题
-      const categoryMatch = line.match(/^##\s+(.+)/);
-      if (categoryMatch) {
-        if (currentCategory) {
-          categories.push(currentCategory);
-        }
-        currentCategory = {
-          name: categoryMatch[1],
-          slug: this.getCategorySlug(categoryMatch[1]),
-          reports: []
-        };
-        continue;
-      }
-      
-      // 匹配报告链接
-      if (currentCategory) {
-        const reportMatch = line.match(/\[([^\]]+)\]\(([^)]+)\)/);
-        if (reportMatch) {
-          const [, title, path] = reportMatch;
-          const report = this.parseReportFromPath(title, path);
-          if (report) {
-            currentCategory.reports.push(report);
+
+    const allowedSlugs = new Set(REPORT_CATEGORIES.map(c => c.slug));
+
+    for (const raw of lines) {
+      const line = raw.trim();
+
+      // 识别分类标题：# 开头的任意级别标题
+      const heading = line.match(/^#{1,6}\s+(.+?)\s*$/);
+      if (heading) {
+        const name = heading[1].replace(/\s*[:：-]+\s*$/, '').trim();
+        const slug = this.getCategorySlug(name);
+
+        // 仅当属于预设的 5 个分类时，才开启新的分类分组
+        if (allowedSlugs.has(slug)) {
+          if (currentCategory) categories.push(currentCategory);
+          currentCategory = { name, slug, reports: [] };
+        } else {
+          // 非分类标题时，结束当前分组以避免误归类
+          if (currentCategory) {
+            categories.push(currentCategory);
+            currentCategory = null;
           }
         }
+        continue;
+      }
+
+      // 收集报告链接（兼容行内任意位置的 [title](path)）
+      if (currentCategory) {
+        const m = line.match(/\[([^\]]+)\]\(([^)]+)\)/);
+        if (m) {
+          const [, title, path] = m;
+          const report = this.parseReportFromPath(title, path);
+          if (report) currentCategory.reports.push(report);
+        }
       }
     }
-    
-    if (currentCategory) {
-      categories.push(currentCategory);
-    }
-    
+
+    if (currentCategory) categories.push(currentCategory);
     return categories;
   }
 

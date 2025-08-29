@@ -20,6 +20,7 @@ export default function Home() {
   const [totalReports, setTotalReports] = useState<number>(0);
   const [categoriesCount, setCategoriesCount] = useState<number>(REPORT_CATEGORIES.length);
   const router = useRouter();
+  const [dateRange, setDateRange] = useState<{ start: Date; end: Date } | undefined>(undefined);
 
   useEffect(() => {
     loadTodayReports();
@@ -109,6 +110,7 @@ export default function Home() {
             const y = new Date(range.start).getFullYear().toString();
             router.push(`/timeline/all/${y}`);
           }}
+          categoryCounts={categoryCounts}
         />
         
         <main className="flex-1 p-6 lg:p-8">

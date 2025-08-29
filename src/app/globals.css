@@ -161,3 +161,19 @@ body {
     color: black !important;
   }
 }
+
+/* Markdown typography fallback (works without typography plugin) */
+.prose { line-height: 1.8; }
+.prose h1,.prose h2,.prose h3,.prose h4 { color: var(--foreground); line-height: 1.25; }
+.prose h1 { font-size: 2rem; font-weight: 800; margin: 1.25rem 0 0.75rem; }
+.prose h2 { font-size: 1.5rem; font-weight: 700; margin: 1rem 0 0.5rem; }
+.prose h3 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+.prose h4 { font-size: 1.1rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+.prose p { margin: 0.5rem 0; }
+.prose ul { list-style: disc; padding-left: 1.25rem; margin: 0.5rem 0; }
+.prose ol { list-style: decimal; padding-left: 1.25rem; margin: 0.5rem 0; }
+.prose blockquote { border-left: 4px solid var(--border); padding-left: 1rem; color: var(--muted-foreground); margin: 1rem 0; }
+.prose a { color: var(--primary); text-decoration: underline; word-break: break-word; }
+.prose code { background: var(--muted); color: var(--foreground); padding: 0.15rem 0.35rem; border-radius: 0.25rem; }
+.prose pre { background: var(--card); color: var(--foreground); padding: 1rem; border-radius: 0.5rem; overflow: auto; }
+.prose hr { border-color: var(--border); margin: 1rem 0; }
