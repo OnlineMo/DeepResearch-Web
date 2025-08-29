@@ -11,18 +11,22 @@ export const dynamicParams = true;
 
 // 为静态导出生成参数
 export async function generateStaticParams() {
-  const categories = ['all', 'shi-zheng-yu-guo-ji', 'she-hui-yu-fa-zhi', 'yu-le-yu-ming-xing', 'xing-ye-yu-gong-si', 'lu-you-yu-chu-xing'];
-  const years = ['2025', '2024']; // 可以根据实际数据调整年份
-  
-  // 生成所有可能的参数组合
-  const params = [];
-  for (const category of categories) {
-    for (const year of years) {
-      params.push({ category, year });
+  try {
+    const nav = await githubService.getNavigationData();
+    const categories = ['all', ...Array.from(new Set(nav.categories.map(c => c.slug)))];
+    const years = ['2025', '2024'];
+    const params: { category: string; year: string }[] = [];
+    for (const category of categories) {
+      for (const year of years) {
+        params.push({ category, year });
+      }
     }
+    return params;
+  } catch {
+    const categories = ['all', 'shi-zheng-yu-guo-ji', 'she-hui-yu-fa-zhi', 'yu-le-yu-ming-xing', 'xing-ye-yu-gong-si', 'lu-you-yu-chu-xing'];
+    const years = ['2025', '2024'];
+    return categories.flatMap(category => years.map(year => ({ category, year })));
   }
-  
-  return params;
 }
 
 // 修改页面组件，移除对searchParams的依赖
@@ -33,10 +37,12 @@ export default async function TimelinePage({ params }: { params: { category?: st
 
   // 获取真实的导航数据
   let allReports: TodayReport[] = [];
+  let categoryMap: Record<string, string> = {};
   
   try {
     // 获取导航数据（包含所有报告）
     const navigationData = await githubService.getNavigationData();
+    categoryMap = Object.fromEntries(navigationData.categories.map((c) => [c.slug, c.name]));
     
     // 将导航数据转换为时间线格式
     allReports = navigationData.categories.flatMap(categorySection =>
@@ -140,13 +146,7 @@ export default async function TimelinePage({ params }: { params: { category?: st
   // 获取可用年份
   const availableYears = [...new Set(allReports.map(report => new Date(report.date).getFullYear().toString()))].sort((a, b) => b.localeCompare(a));
 
-  const getCategoryInfo = (categorySlug: string): ReportCategory => {
-    return REPORT_CATEGORIES.find(cat => cat.slug === categorySlug) || REPORT_CATEGORIES[0];
-  };
 
-  const getCategoryColor = (categorySlug: string) => {
-    return CATEGORY_COLORS[categorySlug] || CATEGORY_COLORS['shi-zheng-yu-guo-ji'];
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -173,7 +173,7 @@ export default async function TimelinePage({ params }: { params: { category?: st
             </p>
           </div>
 
-          <ClientTimelineContent category={category} year={year} allReports={allReports} />
+          <ClientTimelineContent category={category} year={year} allReports={allReports} categoryMap={categoryMap} />
         </div>
       </main>
       <Footer />

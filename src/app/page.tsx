@@ -21,6 +21,7 @@ export default function Home() {
   const [categoriesCount, setCategoriesCount] = useState<number>(REPORT_CATEGORIES.length);
   const router = useRouter();
   const [dateRange, setDateRange] = useState<{ start: Date; end: Date } | undefined>(undefined);
+  const [navCategories, setNavCategories] = useState<{ slug: string; display: string }[]>([]);
 
   useEffect(() => {
     loadTodayReports();
@@ -42,6 +43,7 @@ export default function Home() {
         setCategoryCounts(map);
         setTotalReports(total);
         setCategoriesCount(nav.categories.length || REPORT_CATEGORIES.length);
+        setNavCategories(nav.categories.map((c) => ({ slug: c.slug, display: c.name })));
       } catch {
         // 忽略错误，保持默认值
         setTotalReports(0);
@@ -121,6 +123,7 @@ export default function Home() {
             router.push(`/timeline/all/${y}/?${qs}`);
           }}
           categoryCounts={categoryCounts}
+          categories={navCategories}
         />
         
         <main className="flex-1 p-6 lg:p-8">
@@ -257,13 +260,13 @@ export default function Home() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-              {REPORT_CATEGORIES.map((category) => {
-                const colors = getCategoryColor(category.slug);
+              {(navCategories.length > 0 ? navCategories : REPORT_CATEGORIES).map((category) => {
+                const colors = getCategoryColor((category as any).slug);
                 
                 return (
                   <Link
-                    key={category.slug}
-                    href={`/category/${category.slug}`}
+                    key={(category as any).slug}
+                    href={`/category/${(category as any).slug}`}
                     className="group block"
                   >
                     <div className="relative overflow-hidden rounded-xl border border-border bg-card p-6 transition-all group-hover:shadow-lg group-hover:border-border/60">
@@ -280,15 +283,15 @@ export default function Home() {
                         
                         <div>
                           <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                            {category.display}
+                            {(category as any).display}
                           </h3>
                           <p className="text-sm text-muted-foreground line-clamp-2">
-                            {category.description}
+                            {(category as any).description || '来自 Archive 的自动导入分类'}
                           </p>
                         </div>
                         
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>{categoryCounts[category.slug] ?? 0} 篇报告</span>
+                          <span>{categoryCounts[(category as any).slug] ?? 0} 篇报告</span>
                           <ArrowRight className="h-3 w-3 group-hover:text-primary transition-colors" />
                         </div>
                       </div>

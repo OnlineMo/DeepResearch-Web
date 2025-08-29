@@ -13,6 +13,7 @@ interface SidebarProps {
   onCategoryChange?: (category: string) => void;
   onDateRangeChange?: (range?: { start: Date; end: Date }) => void;
   categoryCounts?: Record<string, number>;
+  categories?: { slug: string; display: string; description?: string }[];
 }
 
 export function Sidebar({
@@ -22,12 +23,14 @@ export function Sidebar({
   selectedDateRange,
   onCategoryChange,
   onDateRangeChange,
-  categoryCounts
+  categoryCounts,
+  categories
 }: SidebarProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['categories', 'filters'])
   );
-  const [localRange, setLocalRange] = useState<{ start: Date; end: Date } | undefined>(selectedDateRange);
+  // 允许只选择开始或结束，不强制成对设置
+  const [localRange, setLocalRange] = useState<{ start?: Date; end?: Date } | undefined>(selectedDateRange);
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -93,9 +96,13 @@ export function Sidebar({
 
             {expandedSections.has('categories') && (
               <div className="mt-2 space-y-1">
-                {REPORT_CATEGORIES.map((category) => {
-                  const colors = getCategoryColor(category.slug);
-                  const isSelected = selectedCategory === category.slug;
+                {(() => {
+                  const categoryList = (categories && categories.length > 0)
+                    ? categories
+                    : REPORT_CATEGORIES.map(c => ({ slug: c.slug, display: c.display, description: c.description }));
+                  return categoryList.map((category: { slug: string; display: string; description?: string }) => {
+                    const colors = getCategoryColor(category.slug);
+                    const isSelected = selectedCategory === category.slug;
 
                   return (
                     <Link
@@ -125,10 +132,10 @@ export function Sidebar({
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{category.display}</p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {category.description}
+                          {category.description ?? '来自 Archive 的自动导入分类'}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {(categoryCounts?.[category.slug] ?? category.count)} 篇报告
+                          {(categoryCounts?.[category.slug] ?? 0)} 篇报告
                         </p>
                       </div>
                       {isSelected && (
@@ -138,8 +145,8 @@ export function Sidebar({
                         />
                       )}
                     </Link>
-                  );
-                })}
+                  )});
+                })()}
               </div>
             )}
           </div>
@@ -176,9 +183,11 @@ export function Sidebar({
                       onChange={(e) => {
                         if (e.target.value) {
                           const newStart = new Date(e.target.value);
-                          const next = { start: newStart, end: localRange?.end ?? newStart };
+                          const next = { start: newStart, end: localRange?.end };
                           setLocalRange(next);
-                          onDateRangeChange?.(next);
+                          if (next.end) {
+                            onDateRangeChange?.({ start: newStart, end: next.end });
+                          }
                         }
                       }}
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background file:border-0 file:bg-transparent file:text-xs file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -190,9 +199,12 @@ export function Sidebar({
                       onChange={(e) => {
                         if (e.target.value) {
                           const newEnd = new Date(e.target.value);
-                          const next = { start: localRange?.start ?? newEnd, end: newEnd };
+                          const start = localRange?.start;
+                          const next = { start, end: newEnd };
                           setLocalRange(next);
-                          onDateRangeChange?.(next);
+                          if (start) {
+                            onDateRangeChange?.({ start, end: newEnd });
+                          }
                         }
                       }}
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background file:border-0 file:bg-transparent file:text-xs file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"

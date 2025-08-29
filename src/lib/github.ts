@@ -285,13 +285,11 @@ class GitHubService {
     }
   }
 
-  // 解析导航数据（更鲁棒：支持 #~######，并仅识别 5 个已知分类）
+  // 解析导航数据（更鲁棒：支持 #~######，动态识别 Archive 中的全部分类）
   private parseNavigationData(content: string): CategorySection[] {
     const categories: CategorySection[] = [];
     const lines = content.split('\n');
     let currentCategory: CategorySection | null = null;
-
-    const allowedSlugs = new Set(REPORT_CATEGORIES.map(c => c.slug));
 
     for (const raw of lines) {
       const line = raw.trim();
@@ -301,18 +299,8 @@ class GitHubService {
       if (heading) {
         const name = heading[1].replace(/\s*[:：-]+\s*$/, '').trim();
         const slug = this.getCategorySlug(name);
-
-        // 仅当属于预设的 5 个分类时，才开启新的分类分组
-        if (allowedSlugs.has(slug)) {
-          if (currentCategory) categories.push(currentCategory);
-          currentCategory = { name, slug, reports: [] };
-        } else {
-          // 非分类标题时，结束当前分组以避免误归类
-          if (currentCategory) {
-            categories.push(currentCategory);
-            currentCategory = null;
-          }
-        }
+        if (currentCategory) categories.push(currentCategory);
+        currentCategory = { name, slug, reports: [] };
         continue;
       }
 
@@ -322,7 +310,15 @@ class GitHubService {
         if (m) {
           const [, title, path] = m;
           const report = this.parseReportFromPath(title, path);
-          if (report) currentCategory.reports.push(report);
+          if (report) {
+            // 若能从路径中推断出更准确的分类 slug，则以路径为准
+            const parts = path.split('/');
+            const catSlugFromPath = parts.length > 1 ? parts[1] : '';
+            if (catSlugFromPath && currentCategory.slug !== catSlugFromPath) {
+              currentCategory.slug = catSlugFromPath;
+            }
+            currentCategory.reports.push(report);
+          }
         }
       }
     }

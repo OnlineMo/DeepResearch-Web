@@ -5,16 +5,20 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Calendar, ArrowRight, BookOpen, Filter, TrendingUp } from 'lucide-react';
 import { REPORT_CATEGORIES, CATEGORY_COLORS } from '@/constants';
-import { TodayReport, ReportCategory } from '@/types';
+import { TodayReport } from '@/types';
 
 type Props = {
   category: string;
   year: string;
   allReports: TodayReport[];
+  categoryMap?: Record<string, string>;
 };
 
-function getCategoryInfo(categorySlug: string): ReportCategory {
-  return REPORT_CATEGORIES.find(cat => cat.slug === categorySlug) || REPORT_CATEGORIES[0];
+function getCategoryDisplay(categorySlug: string, categoryMap?: Record<string, string>) {
+  const fromMap = categoryMap?.[categorySlug];
+  if (fromMap) return fromMap;
+  const fromConst = REPORT_CATEGORIES.find(cat => cat.slug === categorySlug)?.display;
+  return fromConst || categorySlug;
 }
 
 function getCategoryColor(categorySlug: string) {
@@ -36,7 +40,7 @@ function parseDateOrUndefined(v?: string | null): Date | undefined {
   return isNaN(d.getTime()) ? undefined : d;
 }
 
-const ClientTimelineContent: React.FC<Props> = ({ category, year, allReports }) => {
+const ClientTimelineContent: React.FC<Props> = ({ category, year, allReports, categoryMap }) => {
   const searchParams = useSearchParams();
   const startStr = searchParams.get('start');
   const endStr = searchParams.get('end');
@@ -54,7 +58,6 @@ const ClientTimelineContent: React.FC<Props> = ({ category, year, allReports }) 
     if (startDate && endDate) {
       const start = new Date(startDate);
       const end = new Date(endDate);
-      // 归零时分秒，确保比较稳定
       start.setHours(0, 0, 0, 0);
       end.setHours(23, 59, 59, 999);
 
@@ -86,9 +89,14 @@ const ClientTimelineContent: React.FC<Props> = ({ category, year, allReports }) 
     [allReports]
   );
 
+  const availableCategories = useMemo(
+    () => [...new Set(allReports.map(r => r.category))],
+    [allReports]
+  );
+
   return (
     <>
-      {/* Statistics */ }
+      {/* Statistics */}
       <div className="flex justify-center">
         <div className="bg-muted/50 rounded-lg px-6 py-3 inline-flex items-center space-x-4">
           <div className="flex items-center space-x-2">
@@ -107,9 +115,9 @@ const ClientTimelineContent: React.FC<Props> = ({ category, year, allReports }) 
         </div>
       </div>
 
-      {/* Filters */ }
+      {/* Filters */}
       <div className="space-y-4">
-        {/* Year Filter */ }
+        {/* Year Filter */}
         <div className="flex justify-center">
           <div className="flex items-center space-x-3">
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -126,7 +134,7 @@ const ClientTimelineContent: React.FC<Props> = ({ category, year, allReports }) 
           </div>
         </div>
 
-        {/* Category Filter */ }
+        {/* Category Filter */}
         <div className="flex flex-wrap justify-center items-center gap-3">
           <div className="flex items-center space-x-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
@@ -138,28 +146,29 @@ const ClientTimelineContent: React.FC<Props> = ({ category, year, allReports }) 
           >
             全部
           </Link>
-          {REPORT_CATEGORIES.map((cat) => {
-            const colors = getCategoryColor(cat.slug);
+          {availableCategories.map((slug) => {
+            const colors = getCategoryColor(slug);
+            const display = getCategoryDisplay(slug, categoryMap);
             return (
               <Link
-                key={cat.slug}
-                href={`/timeline/${cat.slug}/${year}/`}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${category === cat.slug ? 'text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-                style={category === cat.slug ? { backgroundColor: colors.primary } : {}}
+                key={slug}
+                href={`/timeline/${slug}/${year}/`}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${category === slug ? 'text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                style={category === slug ? { backgroundColor: colors.primary } : {}}
               >
-                {cat.display}
+                {display}
               </Link>
             );
           })}
         </div>
       </div>
 
-      {/* Timeline Content */ }
+      {/* Timeline Content */}
       {Object.keys(groupedReports).length > 0 ? (
         <div className="space-y-8">
-          {/* Timeline */ }
+          {/* Timeline */}
           <div className="relative">
-            {/* Timeline Line */ }
+            {/* Timeline Line */}
             <div className="absolute left-6 top-0 bottom-0 w-px bg-border hidden md:block"></div>
 
             <div className="space-y-12">
@@ -167,7 +176,7 @@ const ClientTimelineContent: React.FC<Props> = ({ category, year, allReports }) 
                 .sort(([a], [b]) => b.localeCompare(a))
                 .map(([date, reports]) => (
                   <div key={date} className="relative">
-                    {/* Date Marker */ }
+                    {/* Date Marker */}
                     <div className="flex items-center mb-6">
                       <div className="hidden md:flex items-center justify-center w-12 h-12 bg-primary rounded-full text-primary-foreground font-semibold text-sm mr-6">
                         {new Date(date).getDate()}
@@ -178,33 +187,33 @@ const ClientTimelineContent: React.FC<Props> = ({ category, year, allReports }) 
                       </div>
                     </div>
 
-                    {/* Reports */ }
+                    {/* Reports */}
                     <div className="md:ml-18 ml-0 space-y-4">
                       {reports.map((report, index) => {
-                        const categoryInfo = getCategoryInfo(report.category);
                         const colors = getCategoryColor(report.category);
+                        const display = getCategoryDisplay(report.category, categoryMap);
                         return (
                           <div key={index} className="group bg-card border border-border rounded-lg p-6 hover:shadow-md transition-all">
                             <div className="space-y-3">
-                              {/* Header */ }
+                              {/* Header */}
                               <div className="flex items-center justify-between">
                                 <span
                                   className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
                                   style={{ backgroundColor: colors.light, color: colors.primary }}
                                 >
-                                  {categoryInfo.display}
+                                  {display}
                                 </span>
                                 <span className="text-xs text-muted-foreground">版本 {report.version}</span>
                               </div>
 
-                              {/* Title */ }
+                              {/* Title */}
                               <Link href={`/report?path=${encodeURIComponent(report.path)}`}>
                                 <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                                   {report.title}
                                 </h3>
                               </Link>
 
-                              {/* Actions */ }
+                              {/* Actions */}
                               <div className="flex items-center justify-between pt-2">
                                 <Link
                                   href={`/report?path=${encodeURIComponent(report.path)}`}

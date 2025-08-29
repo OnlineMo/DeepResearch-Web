@@ -9,45 +9,29 @@ import {
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { githubService } from '@/lib/github';
-import { REPORT_CATEGORIES, CATEGORY_COLORS } from '@/constants';
+import { CATEGORY_COLORS, REPORT_CATEGORIES } from '@/constants';
 
 export default async function CategoriesPage() {
-  // 获取所有分类的报告数据
-  const categoryData = await Promise.all(
-    REPORT_CATEGORIES.map(async (category) => {
-      try {
-        // 获取分类下的Reports.md文件内容
-        const reportsContent = await githubService.getCategoryReportsIndex(category.slug);
-        
-        // 简单解析报告数量（从Reports.md的第一行提取）
-        const lines = reportsContent.split('\n');
-        const countLine = lines.find(line => line.includes('报告总数'));
-        const countMatch = countLine?.match(/报告总数：(\d+)/);
-        const reportCount = countMatch ? parseInt(countMatch[1]) : 0;
-        
-        return {
-          ...category,
-          count: reportCount,
-          lastUpdated: new Date() // 实际应该从API获取最新更新时间
-        };
-      } catch (error: unknown) {
-        console.warn(`Failed to fetch reports for category ${category.slug}:`, error);
-        // 如果是速率限制错误，显示更友好的错误信息
-        if (error instanceof Error && error.message.includes('API速率限制')) {
-          return {
-            ...category,
-            count: -1, // 特殊值表示API速率限制
-            lastUpdated: new Date()
-          };
-        }
-        return {
-          ...category,
-          count: 0,
-          lastUpdated: new Date()
-        };
-      }
-    })
-  );
+  // 从导航动态获取全部分类（包含新分类）
+  let categoryData: { slug: string; display: string; description?: string; count: number }[] = [];
+  try {
+    const nav = await githubService.getNavigationData();
+    categoryData = nav.categories.map((section) => ({
+      slug: section.slug,
+      display: section.name,
+      description: '来自 Archive 的自动导入分类',
+      count: section.reports?.length || 0,
+    }));
+  } catch (error: unknown) {
+    console.warn('Failed to fetch navigation data for categories page:', error);
+    // 回退到常量，保证页面可渲染
+    categoryData = REPORT_CATEGORIES.map((c) => ({
+      slug: c.slug,
+      display: c.display,
+      description: c.description,
+      count: 0,
+    }));
+  }
 
 
 
@@ -79,7 +63,7 @@ export default async function CategoriesPage() {
               <div className="flex items-center space-x-2">
                 <BookOpen className="h-4 w-4 text-blue-500" />
                 <span className="text-sm font-medium text-foreground">
-                  共 {REPORT_CATEGORIES.length} 个分类
+                  共 {categoryData.length} 个分类
                 </span>
               </div>
               <div className="h-4 w-px bg-border"></div>
@@ -98,14 +82,14 @@ export default async function CategoriesPage() {
               const colors = CATEGORY_COLORS[category.slug] || CATEGORY_COLORS['shi-zheng-yu-guo-ji'];
               
               return (
-                <div 
-                  key={category.slug} 
+                <div
+                  key={category.slug}
                   className="group bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg transition-all"
                 >
                   <div className="p-6 space-y-4">
                     {/* Category Header */}
                     <div className="flex items-start justify-between">
-                      <div 
+                      <div
                         className="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-4"
                         style={{
                           backgroundColor: colors.light,
@@ -127,7 +111,7 @@ export default async function CategoriesPage() {
                         {category.display}
                       </h3>
                       <p className="text-muted-foreground text-sm">
-                        {category.description}
+                        {category.description ?? '来自 Archive 的自动导入分类'}
                       </p>
                     </div>
                     
