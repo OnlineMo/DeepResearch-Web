@@ -298,6 +298,13 @@ class GitHubService {
       const heading = line.match(/^#{1,6}\s+(.+?)\s*$/);
       if (heading) {
         const name = heading[1].replace(/\s*[:：-]+\s*$/, '').trim();
+        const headingName = name.toLowerCase();
+        if (/(导航|目录|overview|contents|guide|指南)/i.test(name) || headingName.includes('deepresearch')) {
+          // 跳过非真实分类标题（如“DeepResearch 报告导航”等）
+          if (currentCategory) { categories.push(currentCategory); }
+          currentCategory = null;
+          continue;
+        }
         const slug = this.getCategorySlug(name);
         if (currentCategory) categories.push(currentCategory);
         currentCategory = { name, slug, reports: [] };
@@ -324,7 +331,7 @@ class GitHubService {
     }
 
     if (currentCategory) categories.push(currentCategory);
-    return categories;
+    return categories.filter(c => (c.reports?.length || 0) > 0);
   }
 
   // 从路径解析报告信息
