@@ -348,16 +348,26 @@ class GitHubService {
     return null;
   }
 
-  // 获取分类slug
+  // 获取分类slug（支持多种中文标题别名）
   private getCategorySlug(categoryName: string): string {
     const slugMap: Record<string, string> = {
+      // 带“与”的版本
       '时政与国际': 'shi-zheng-yu-guo-ji',
       '社会与法治': 'she-hui-yu-fa-zhi',
       '娱乐与明星': 'yu-le-yu-ming-xing',
       '行业与公司': 'xing-ye-yu-gong-si',
-      '旅游与出行': 'lu-you-yu-chu-xing'
+      '旅游与出行': 'lu-you-yu-chu-xing',
+      // 无“与”的版本（README/NAVIGATION 里常见）
+      '时政国际': 'shi-zheng-yu-guo-ji',
+      '社会法治': 'she-hui-yu-fa-zhi',
+      '娱乐明星': 'yu-le-yu-ming-xing',
+      '行业公司': 'xing-ye-yu-gong-si',
+      '旅游出行': 'lu-you-yu-chu-xing'
     };
-    return slugMap[categoryName] || categoryName.toLowerCase().replace(/\s+/g, '-');
+    // 直接命中中文别名
+    if (slugMap[categoryName]) return slugMap[categoryName];
+    // 普通回退（英文 slug 已经是标准形式时）
+    return categoryName.toLowerCase().replace(/\s+/g, '-');
   }
 
   // 获取分类下的所有报告
