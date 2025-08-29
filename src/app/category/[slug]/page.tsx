@@ -1,10 +1,7 @@
 import React from 'react';
-import dynamic from 'next/dynamic';
 import { REPORT_CATEGORIES } from '@/constants';
 import { githubService } from '@/lib/github';
-
-// 使用动态导入以避免类型解析问题，并确保在客户端渲染
-const ClientCategoryPage = dynamic(() => import('./ClientCategoryPage'), { ssr: false });
+import ClientCategoryPage from './ClientCategoryPage';
 
 // 动态生成静态参数：从 Archive NAVIGATION.md 获取全部分类，包含新增分类
 export async function generateStaticParams() {
