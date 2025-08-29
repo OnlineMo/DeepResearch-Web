@@ -170,7 +170,7 @@ export default function Home() {
                           </span>
                         </div>
                         
-                        <Link href={`/report/${encodeURIComponent(report.path)}`}>
+                        <Link href={`/report?path=${encodeURIComponent(report.path)}`}>
                           <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
                             {report.title}
                           </h3>
@@ -178,7 +178,7 @@ export default function Home() {
                         
                         <div className="flex items-center justify-between pt-2 border-t border-border">
                           <Link
-                            href={`/report/${encodeURIComponent(report.path)}`}
+                            href={`/report?path=${encodeURIComponent(report.path)}`}
                             className="inline-flex items-center space-x-1 text-sm font-medium text-primary hover:underline"
                           >
                             <span>阅读详情</span>

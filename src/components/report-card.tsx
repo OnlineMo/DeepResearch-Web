@@ -40,7 +40,7 @@ export function ReportCard({ report, featured = false, compact = false }: Report
   if (compact) {
     return (
       <Link
-        href={`/report/${encodeURIComponent(report.path)}`}
+        href={`/report?path=${encodeURIComponent(report.path)}`}
         className="group block rounded-lg border border-border bg-card p-4 transition-all hover:shadow-md hover:border-border/60"
       >
         <div className="flex items-start justify-between">
@@ -91,7 +91,7 @@ export function ReportCard({ report, featured = false, compact = false }: Report
         <div className="space-y-4">
           <div>
             <Link
-              href={`/report/${encodeURIComponent(report.path)}`}
+              href={`/report?path=${encodeURIComponent(report.path)}`}
               className="block"
             >
               <h2 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2">
@@ -123,7 +123,7 @@ export function ReportCard({ report, featured = false, compact = false }: Report
           {/* Actions */}
           <div className="flex items-center justify-between">
             <Link
-              href={`/report/${encodeURIComponent(report.path)}`}
+              href={`/report?path=${encodeURIComponent(report.path)}`}
               className="inline-flex items-center space-x-1 text-sm font-medium text-primary hover:underline"
             >
               <span>阅读全文</span>
@@ -174,7 +174,7 @@ export function ReportCard({ report, featured = false, compact = false }: Report
           </div>
 
           <Link
-            href={`/report/${encodeURIComponent(report.path)}`}
+            href={`/report?path=${encodeURIComponent(report.path)}`}
             className="block"
           >
             <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
@@ -205,7 +205,7 @@ export function ReportCard({ report, featured = false, compact = false }: Report
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <Link
-            href={`/report/${encodeURIComponent(report.path)}`}
+            href={`/report?path=${encodeURIComponent(report.path)}`}
             className="inline-flex items-center space-x-1 text-sm font-medium text-primary hover:underline"
           >
             <span>阅读详情</span>

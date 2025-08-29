@@ -20,16 +20,16 @@ class GitHubService {
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5分钟缓存
 
   constructor(token?: string) {
-    // 优先使用传入的token，然后是环境变量，最后是undefined
-    const authToken = token || process.env.GITHUB_TOKEN || undefined;
-    
-    // 如果环境变量未设置，记录警告信息
-    if (!authToken) {
-      console.warn('警告: 未配置GITHUB_TOKEN环境变量，API请求限制为60次/小时');
+    // 优先使用传入的 token，其次使用环境变量（忽略占位符），否则为 undefined
+    const envToken = process.env.GITHUB_TOKEN;
+    const resolvedToken = token || (envToken && envToken !== 'your_github_token_here' ? envToken : undefined);
+
+    if (!resolvedToken) {
+      console.warn('警告: 未配置 GITHUB_TOKEN（或仍为占位符），API 请求限制为 60 次/小时');
     }
-    
+
     this.octokit = new Octokit({
-      auth: authToken,
+      auth: resolvedToken,
     });
   }
 
@@ -44,6 +44,47 @@ class GitHubService {
 
   private setCache(key: string, data: unknown): void {
     this.cache.set(key, { data, timestamp: Date.now() });
+  }
+
+  // Base64 解码（支持浏览器与 Node）
+  private decodeBase64Utf8(b64: string): string {
+    try {
+      // 优先使用浏览器 atob + TextDecoder
+      type GlobalLike = {
+        atob?: (data: string) => string;
+        Buffer?: {
+          from: (input: string, encoding: string) => { toString: (encoding: string) => string }
+        };
+      };
+      const gl = globalThis as unknown as GlobalLike;
+      const atobFn = typeof gl.atob === 'function' ? gl.atob : undefined;
+      if (atobFn) {
+        const binary = atobFn(b64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        if (typeof TextDecoder !== 'undefined') {
+          return new TextDecoder('utf-8').decode(bytes);
+        }
+      }
+    } catch (e) {
+      console.error('Browser base64 decode failed:', e);
+    }
+    try {
+      // Node.js 或回退
+      type GlobalLikeForBuffer = {
+        Buffer?: {
+          from: (input: string, encoding: string) => { toString: (encoding: string) => string }
+        };
+      };
+      const glb = globalThis as unknown as GlobalLikeForBuffer;
+      const BufferCtor = glb.Buffer;
+      if (BufferCtor && typeof BufferCtor.from === 'function') {
+        return BufferCtor.from(b64, 'base64').toString('utf-8');
+      }
+    } catch (e) {
+      console.error('Node base64 decode failed:', e);
+    }
+    return '';
   }
 
   // 获取仓库根目录内容
@@ -103,7 +144,7 @@ class GitHubService {
         throw new Error('README.md is not a file');
       }
 
-      const content = Buffer.from(response.data.content, 'base64').toString('utf-8');
+      const content = this.decodeBase64Utf8(response.data.content as string);
       const reports = this.parseReadmeReports(content);
       
       const result: TodayReportsResponse = {
@@ -193,7 +234,7 @@ class GitHubService {
         throw new Error('NAVIGATION.md is not a file');
       }
 
-      const content = Buffer.from(response.data.content, 'base64').toString('utf-8');
+      const content = this.decodeBase64Utf8(response.data.content as string);
       const categories = this.parseNavigationData(content);
       
       const result: NavigationResponse = {
@@ -374,7 +415,7 @@ class GitHubService {
         throw new Error(`${path} is not a file`);
       }
 
-      return Buffer.from(response.data.content, 'base64').toString('utf-8');
+      return this.decodeBase64Utf8(response.data.content as string);
     } catch (error: unknown) {
       console.error(`Error fetching file content for path ${path}:`, error);
       // 如果是404错误，提供更具体的错误信息
@@ -494,7 +535,7 @@ class GitHubService {
         throw new Error('Reports.md is not a file');
       }
 
-      return Buffer.from(response.data.content, 'base64').toString('utf-8');
+      return this.decodeBase64Utf8(response.data.content as string);
     } catch (error) {
       console.error(`Error fetching Reports.md for category ${categorySlug}:`, error);
       // 返回默认的Reports.md内容

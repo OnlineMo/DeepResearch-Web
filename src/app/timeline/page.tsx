@@ -324,7 +324,7 @@ export default async function TimelinePage({ params }: { params: { category?: st
                                   </div>
                                   
                                   {/* Title */}
-                                  <Link href={`/report/${encodeURIComponent(report.path)}`}>
+                                  <Link href={`/report?path=${encodeURIComponent(report.path)}`}>
                                     <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                                       {report.title}
                                     </h3>
@@ -333,7 +333,7 @@ export default async function TimelinePage({ params }: { params: { category?: st
                                   {/* Actions */}
                                   <div className="flex items-center justify-between pt-2">
                                     <Link
-                                      href={`/report/${encodeURIComponent(report.path)}`}
+                                      href={`/report?path=${encodeURIComponent(report.path)}`}
                                       className="inline-flex items-center space-x-2 text-sm font-medium text-primary hover:underline"
                                     >
                                       <BookOpen className="h-4 w-4" />

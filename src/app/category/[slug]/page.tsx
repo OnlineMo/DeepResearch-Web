@@ -205,7 +205,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                     
                     {/* Title and Description */}
                     <div className="space-y-2">
-                      <Link href={`/report/${encodeURIComponent(report.path.startsWith('AI_Reports/') ? report.path : `AI_Reports/${report.path}`)}`}>
+                      <Link href={`/report?path=${encodeURIComponent(report.path.startsWith('AI_Reports/') ? report.path : `AI_Reports/${report.path}`)}`}>
                         <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
                           {report.title}
                         </h3>
@@ -218,7 +218,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                     {/* Actions */}
                     <div className="flex items-center justify-between pt-4 border-t border-border">
                       <Link
-                        href={`/report/${encodeURIComponent(report.path.startsWith('AI_Reports/') ? report.path : `AI_Reports/${report.path}`)}`}
+                        href={`/report?path=${encodeURIComponent(report.path.startsWith('AI_Reports/') ? report.path : `AI_Reports/${report.path}`)}`}
                         className="inline-flex items-center space-x-2 text-sm font-medium text-primary hover:underline"
                       >
                         <BookOpen className="h-4 w-4" />
