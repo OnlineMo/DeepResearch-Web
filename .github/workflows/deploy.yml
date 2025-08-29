@@ -3,6 +3,9 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
+  schedule:
+    - cron: '0 */6 * * *'   # 每 6 小时触发一次（UTC）
+  workflow_dispatch:        # 允许手动触发
 
 # 设置 GITHUB_TOKEN 的权限以允许部署到 GitHub Pages
 permissions:
