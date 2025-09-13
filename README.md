@@ -130,6 +130,10 @@ GITHUB_TOKEN=your_github_token_here
 
 - [DeepResearch-Archive](https://github.com/OnlineMo/DeepResearch-Archive) - AI 研究报告存储仓库
 
+## 变量设置
+- 构建自定义域名版本：不要设置 NEXT_PUBLIC_GH_PAGES（或设为 false）。
+- 构建 GitHub 项目页版本：设置 NEXT_PUBLIC_GH_PAGES=true。
+
 ## 📄 许可证
 
 MIT License
